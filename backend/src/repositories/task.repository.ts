@@ -35,14 +35,45 @@ export const taskRepo = {
             data: { assignedTo },
         }),
 
+    //submit task for approval
+    submitTask: (id: number, submittedBy: number) =>
+        prisma.task.update({
+            where: { id },
+            data: {
+                status: 'SUBMITTED',
+                submittedAt: new Date(),
+                submittedBy,
+            },
+        }),
+
+    //approve task
+    approveTask: (id: number, approvedBy: number) =>
+        prisma.task.update({
+            where: { id },
+            data: {
+                status: 'APPROVED',
+                approvedAt: new Date(),
+                approvedBy,
+            },
+        }),
+
+    //reject task
+    rejectTask: (id: number) =>
+        prisma.task.update({
+            where: { id },
+            data: {
+                status: 'PENDING',
+            },
+        }),
+
     //complete task
     completeTask: (id: number, completedBy: number) =>
         prisma.task.update({
             where: { id },
             data: {
-                status: 'DONE' as TaskStatus,
-                completedAt: new Date(),
-                completedBy,
+                status: 'APPROVED' as TaskStatus,
+                approvedAt: new Date(),
+                approvedBy: completedBy,
             },
         }),
 

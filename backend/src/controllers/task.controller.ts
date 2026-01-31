@@ -60,10 +60,32 @@ export const taskController = {
     completeTask: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
-            const task = await taskService.completeTask(Number(id), req.userId!);
+            const task = await taskService.submitTask(Number(id), req.userId!);
             res.json(task);
-        } catch (error) {
-            res.status(400).json({ error: 'Failed to complete task' });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
+        }
+    },
+
+    approveTask: async (req: AuthRequest, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { roomId } = req.body;
+            const task = await taskService.approveTask(Number(id), req.userId!, roomId);
+            res.json(task);
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
+        }
+    },
+
+    rejectTask: async (req: AuthRequest, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { roomId } = req.body;
+            const task = await taskService.rejectTask(Number(id), req.userId!, roomId);
+            res.json(task);
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
         }
     },
 

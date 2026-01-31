@@ -17,7 +17,9 @@ enum UserRole {
 enum TaskStatus {
   PENDING
   IN_PROGRESS
-  DONE
+  SUBMITTED
+  APPROVED
+  REJECTED
   BLOCKED
 }
 
@@ -61,8 +63,10 @@ model Task {
   room         Room       @relation(fields: [roomId], references: [id])
 
   startedAt    DateTime?
-  completedAt  DateTime?
-  completedBy  Int?
+  submittedAt  DateTime?
+  submittedBy  Int?
+  approvedAt   DateTime?
+  approvedBy   Int?
 
   dependencies TaskDependency[] @relation("TaskDependsOn")
   dependents   TaskDependency[] @relation("TaskIsPrerequisite")

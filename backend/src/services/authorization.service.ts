@@ -25,15 +25,28 @@ export const authorizationService = {
 
     // Check if user can assign tasks in a room
     canAssignTasks: async (userId: number, roomId: number) => {
-        const isAdmin = await authorizationService.isRoomAdmin(userId, roomId);
         const isGlobalAdmin = await authorizationService.isGlobalAdmin(userId);
-        return isAdmin || isGlobalAdmin;
+        if (isGlobalAdmin) return true; // Global admin can do everything
+
+        const isRoomAdmin = await authorizationService.isRoomAdmin(userId, roomId);
+        return isRoomAdmin;
     },
 
     // Check if user can promote members in a room
     canPromoteMembers: async (userId: number, roomId: number) => {
-        const isAdmin = await authorizationService.isRoomAdmin(userId, roomId);
         const isGlobalAdmin = await authorizationService.isGlobalAdmin(userId);
-        return isAdmin || isGlobalAdmin;
+        if (isGlobalAdmin) return true; // Global admin can do everything
+
+        const isRoomAdmin = await authorizationService.isRoomAdmin(userId, roomId);
+        return isRoomAdmin;
+    },
+
+    // Check if user can approve tasks in a room
+    canApproveTasks: async (userId: number, roomId: number) => {
+        const isGlobalAdmin = await authorizationService.isGlobalAdmin(userId);
+        if (isGlobalAdmin) return true; // Global admin can approve all tasks
+
+        const isRoomAdmin = await authorizationService.isRoomAdmin(userId, roomId);
+        return isRoomAdmin; // Room admin can only approve in their room
     },
 };

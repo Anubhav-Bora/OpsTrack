@@ -31,8 +31,23 @@ export const taskService = {
         return await taskRepo.assignTask(id, assignedTo);
     },
 
-    completeTask: async (id: number, completedBy: number) => {
-        return await taskRepo.completeTask(id, completedBy);
+    submitTask: async (id: number, userId: number) => {
+        const task = await taskRepo.getTaskbyId(id);
+        if (!task) throw new Error('Task not found');
+        if (task.assignedTo !== userId) throw new Error('You can only submit your own tasks');
+        return await taskRepo.submitTask(id, userId);
+    },
+
+    approveTask: async (id: number, userId: number, roomId: number) => {
+        const canApprove = await authorizationService.canApproveTasks(userId, roomId);
+        if (!canApprove) throw new Error('You do not have permission to approve tasks');
+        return await taskRepo.approveTask(id, userId);
+    },
+
+    rejectTask: async (id: number, userId: number, roomId: number) => {
+        const canApprove = await authorizationService.canApproveTasks(userId, roomId);
+        if (!canApprove) throw new Error('You do not have permission to reject tasks');
+        return await taskRepo.rejectTask(id);
     },
 
     deleteTask: async (id: number) => {

@@ -12,7 +12,9 @@ router.get('/:id', authMiddleware, taskController.getTaskById);
 router.post('/', authMiddleware, taskController.createTask);
 router.put('/:id/status', authMiddleware, taskController.updateTaskStatus);
 router.put('/:id/assign', authMiddleware, taskController.assignTask);
-router.put('/:id/complete', authMiddleware, taskController.completeTask);
+router.put('/:id/submit', authMiddleware, taskController.completeTask);
+router.put('/:id/approve', authMiddleware, taskController.approveTask);
+router.put('/:id/reject', authMiddleware, taskController.rejectTask);
 router.delete('/:id', authMiddleware, taskController.deleteTask);
 
 export default router;
