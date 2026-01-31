@@ -1,8 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { roomMemberService } from '../services/roomMember.service';
+import { authorizationService } from '../services/authorization.service';
+import { AuthRequest } from '../middlewares/auth.middleware';
 
 export const roomMemberController = {
-    getAllRoomMembers: async (req: Request, res: Response) => {
+    getAllRoomMembers: async (req: AuthRequest, res: Response) => {
         try {
             const members = await roomMemberService.getAllRoomMembers();
             res.json(members);
@@ -11,7 +13,7 @@ export const roomMemberController = {
         }
     },
 
-    getRoomMembersByRoomId: async (req: Request, res: Response) => {
+    getRoomMembersByRoomId: async (req: AuthRequest, res: Response) => {
         try {
             const { roomId } = req.params;
             const members = await roomMemberService.getRoomMembersByRoomId(Number(roomId));
@@ -21,7 +23,7 @@ export const roomMemberController = {
         }
     },
 
-    getUserRoomMemberships: async (req: Request, res: Response) => {
+    getUserRoomMemberships: async (req: AuthRequest, res: Response) => {
         try {
             const { userId } = req.params;
             const memberships = await roomMemberService.getUserRoomMemberships(Number(userId));
@@ -31,34 +33,46 @@ export const roomMemberController = {
         }
     },
 
-    addMemberToRoom: async (req: Request, res: Response) => {
+    addMemberToRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { userId, roomId, role } = req.body;
+            const canPromote = await authorizationService.canPromoteMembers(req.userId!, roomId);
+            if (!canPromote) {
+                return res.status(403).json({ error: 'You do not have permission to add members' });
+            }
             const member = await roomMemberService.addMemberToRoom(userId, roomId, role);
             res.status(201).json(member);
-        } catch (error) {
-            res.status(400).json({ error: 'Failed to add member to room' });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
         }
     },
 
-    updateMemberRole: async (req: Request, res: Response) => {
+    updateMemberRole: async (req: AuthRequest, res: Response) => {
         try {
             const { userId, roomId } = req.params;
             const { role } = req.body;
+            const canPromote = await authorizationService.canPromoteMembers(req.userId!, Number(roomId));
+            if (!canPromote) {
+                return res.status(403).json({ error: 'You do not have permission to update member roles' });
+            }
             const member = await roomMemberService.updateMemberRole(Number(userId), Number(roomId), role);
             res.json(member);
-        } catch (error) {
-            res.status(400).json({ error: 'Failed to update member role' });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
         }
     },
 
-    removeMemberFromRoom: async (req: Request, res: Response) => {
+    removeMemberFromRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { userId, roomId } = req.params;
+            const canPromote = await authorizationService.canPromoteMembers(req.userId!, Number(roomId));
+            if (!canPromote) {
+                return res.status(403).json({ error: 'You do not have permission to remove members' });
+            }
             await roomMemberService.removeMemberFromRoom(Number(userId), Number(roomId));
             res.json({ message: 'Member removed from room' });
-        } catch (error) {
-            res.status(400).json({ error: 'Failed to remove member from room' });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
         }
     },
 };

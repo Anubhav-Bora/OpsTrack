@@ -35,16 +35,41 @@ export const taskRepo = {
             data: { assignedTo },
         }),
 
+    //complete task
+    completeTask: (id: number, completedBy: number) =>
+        prisma.task.update({
+            where: { id },
+            data: {
+                status: 'DONE' as TaskStatus,
+                completedAt: new Date(),
+                completedBy,
+            },
+        }),
+
     //delete task
     deleteTask: (id: number) =>
         prisma.task.delete({
             where: { id },
         }),
 
-    //get tasks of a room
-    taskRoom: (roomId: number) =>
+    //get tasks by room
+    getTasksByRoom: (roomId: number) =>
         prisma.task.findMany({
             where: { roomId },
             include: { assignee: true, dependencies: true },
-        })
+        }),
+
+    //get completed tasks with completion info
+    getCompletedTasks: (roomId: number) =>
+        prisma.task.findMany({
+            where: { roomId, status: 'DONE' as TaskStatus },
+            include: { assignee: true },
+        }),
+
+    //get tasks assigned to user
+    getTasksByAssignee: (userId: number) =>
+        prisma.task.findMany({
+            where: { assignedTo: userId },
+            include: { room: true, dependencies: true },
+        }),
 }
