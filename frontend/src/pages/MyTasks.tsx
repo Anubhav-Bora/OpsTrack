@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
@@ -16,14 +16,14 @@ export default function MyTasks() {
   const { user } = useAuth();
   const { addToast } = useToastNotification();
 
-  const [tasks, setTasks] = React.useState<Task[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [selectedTask, setSelectedTask] = React.useState<Task | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<TaskStatus | "ALL">("ALL");
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
 
   // Load user's tasks
-  React.useEffect(() => {
+  useEffect(() => {
     const loadTasks = async () => {
       await new Promise((r) => setTimeout(r, 500));
       // Filter tasks assigned to current user
@@ -39,7 +39,7 @@ export default function MyTasks() {
   }, [user?.id]);
 
   // Filter tasks
-  const filteredTasks = React.useMemo(() => {
+  const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       const matchesSearch =
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -92,7 +92,7 @@ export default function MyTasks() {
   ];
 
   // Task counts by status
-  const statusCounts = React.useMemo(() => {
+  const statusCounts = useMemo(() => {
     return {
       all: tasks.length,
       pending: tasks.filter((t) => t.status === "PENDING").length,
@@ -124,11 +124,10 @@ export default function MyTasks() {
             <button
               key={item.label}
               onClick={() => setStatusFilter(item.filter)}
-              className={`rounded-lg border p-4 text-left transition-all ${
-                statusFilter === item.filter
-                  ? "border-primary bg-primary/5"
-                  : "hover:border-primary/50"
-              }`}
+              className={`rounded-lg border p-4 text-left transition-all ${statusFilter === item.filter
+                ? "border-primary bg-primary/5"
+                : "hover:border-primary/50"
+                }`}
             >
               <p className="text-2xl font-semibold text-foreground">{item.count}</p>
               <p className="text-sm text-muted-foreground">{item.label}</p>
@@ -208,10 +207,10 @@ export default function MyTasks() {
                     {(task.status === "PENDING" ||
                       task.status === "IN_PROGRESS" ||
                       task.status === "REJECTED") && (
-                      <Button size="sm" onClick={() => handleQuickSubmit(task)}>
-                        Submit
-                      </Button>
-                    )}
+                        <Button size="sm" onClick={() => handleQuickSubmit(task)}>
+                          Submit
+                        </Button>
+                      )}
                     {task.status === "SUBMITTED" && (
                       <span className="text-sm text-muted-foreground">Awaiting approval</span>
                     )}

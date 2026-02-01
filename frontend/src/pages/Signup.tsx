@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Boxes, Eye, EyeOff, Briefcase } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,16 +13,16 @@ export default function Signup() {
   const navigate = useNavigate();
   const { signup, isAuthenticated } = useAuth();
   const { addToast } = useToastNotification();
-  
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [role, setRole] = React.useState<UserRole>("MEMBER");
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  React.useEffect(() => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("MEMBER");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
     if (isAuthenticated) {
       navigate("/dashboard", { replace: true });
     }
@@ -169,11 +169,10 @@ export default function Signup() {
                     key={r}
                     type="button"
                     onClick={() => setRole(r)}
-                    className={`p-3 rounded-lg border text-center transition-all ${
-                      role === r
+                    className={`p-3 rounded-lg border text-center transition-all ${role === r
                         ? "border-primary bg-primary/5 text-primary"
                         : "border-border hover:border-primary/50"
-                    }`}
+                      }`}
                   >
                     <Briefcase className="h-5 w-5 mx-auto mb-1" />
                     <span className="text-sm font-medium">{ROLE_LABELS[r]}</span>

@@ -1,31 +1,22 @@
-import * as React from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Boxes, Eye, EyeOff, ArrowRight, Sparkles, Shield, Users, Zap } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToastNotification } from "@/components/Common/Toast";
 import { cn } from "@/lib/utils";
+import { useLogin } from "@/hooks/useAuthApi";
 
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login, isAuthenticated } = useAuth();
   const { addToast } = useToastNotification();
+  const { mutate: login, isPending } = useLogin();
 
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
-
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      const from = (location.state as any)?.from?.pathname || "/dashboard";
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, navigate, location]);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -41,20 +32,22 @@ export default function Login() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    setIsLoading(true);
-    try {
-      await login({ email, password });
-      addToast("success", "Welcome back!", "You have been logged in successfully.");
-      navigate("/dashboard");
-    } catch (error) {
-      addToast("error", "Login failed", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    login(
+      { email, password },
+      {
+        onSuccess: () => {
+          addToast("success", "Welcome back!", "You have been logged in successfully.");
+          navigate("/dashboard");
+        },
+        onError: (error) => {
+          addToast("error", "Login failed", error instanceof Error ? error.message : "Please try again.");
+        },
+      }
+    );
   };
 
   const features = [
@@ -166,9 +159,9 @@ export default function Login() {
             <Button
               type="submit"
               className="w-full h-12 rounded-xl gradient-primary border-0 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 group"
-              disabled={isLoading}
+              disabled={isPending}
             >
-              {isLoading ? (
+              {isPending ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Signing in...

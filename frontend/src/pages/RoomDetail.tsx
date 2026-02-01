@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Users, ListTodo, BarChart3, Search, Filter } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
@@ -22,24 +22,24 @@ export default function RoomDetail() {
   const { user } = useAuth();
   const { addToast } = useToastNotification();
 
-  const [room, setRoom] = React.useState<Room | null>(null);
-  const [tasks, setTasks] = React.useState<Task[]>([]);
-  const [members, setMembers] = React.useState<RoomMember[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [selectedTask, setSelectedTask] = React.useState<Task | null>(null);
-  const [showCreateTask, setShowCreateTask] = React.useState(false);
-  const [isCreatingTask, setIsCreatingTask] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<TaskStatus | "ALL">("ALL");
+  const [room, setRoom] = useState<Room | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [members, setMembers] = useState<RoomMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [showCreateTask, setShowCreateTask] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
 
   // Get room-specific permissions
   const { isRoomAdminOrLeader, isRoomAdmin } = useRoomRole(members);
 
   // Load data
-  React.useEffect(() => {
+  useEffect(() => {
     const loadData = async () => {
       await new Promise((r) => setTimeout(r, 500));
-      
+
       const foundRoom = MOCK_ROOMS.find((r) => r.id === roomId);
       if (!foundRoom) {
         navigate("/dashboard");
@@ -56,7 +56,7 @@ export default function RoomDetail() {
   }, [roomId, navigate, addToast]);
 
   // Filter tasks
-  const filteredTasks = React.useMemo(() => {
+  const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.description?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -93,7 +93,7 @@ export default function RoomDetail() {
     setIsCreatingTask(true);
     try {
       await new Promise((r) => setTimeout(r, 500));
-      
+
       const assignee = data.assigneeId
         ? MOCK_USERS.find((u) => u.id === data.assigneeId)
         : undefined;

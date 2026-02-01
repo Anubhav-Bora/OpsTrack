@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, ListTodo, Clock, CheckCircle, AlertTriangle, Sparkles, TrendingUp } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
@@ -6,67 +6,57 @@ import { Header } from "@/components/Layout/Header";
 import { RoomCard, RoomCardSkeleton } from "@/components/Room/RoomCard";
 import { RoomForm } from "@/components/Room/RoomForm";
 import { Button } from "@/components/ui/button";
-import { useAuth, useIsAdminOrLeader } from "@/contexts/AuthContext";
-import { useToastNotification } from "@/components/Common/Toast";
+import { useToast } from "@/components/ui/use-toast";
 import { EmptyState } from "@/components/Common/EmptyState";
-import { MOCK_ROOMS, MOCK_TASKS, calculateDashboardStats } from "@/data/mockData";
-import { Room, CreateRoomInput, DashboardStats } from "@/types";
+import { useRooms, useCreateRoom } from "@/hooks/useRooms";
+import { CreateRoomInput } from "@/types";
+import { useAppSelector } from "@/store/hooks";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isAdminOrLeader = useIsAdminOrLeader();
-  const { addToast } = useToastNotification();
-  
-  const [rooms, setRooms] = React.useState<Room[]>([]);
-  const [stats, setStats] = React.useState<DashboardStats | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [showCreateRoom, setShowCreateRoom] = React.useState(false);
-  const [isCreating, setIsCreating] = React.useState(false);
+  const { toast } = useToast();
+  const [showCreateRoom, setShowCreateRoom] = useState(false);
 
-  // Load data
-  React.useEffect(() => {
-    const loadData = async () => {
-      await new Promise((r) => setTimeout(r, 800));
-      setRooms(MOCK_ROOMS);
-      setStats(calculateDashboardStats(MOCK_TASKS, user?.id));
-      setIsLoading(false);
-    };
-    loadData();
+  // Get user and auth state from Redux
+  const user = useAppSelector((state) => state.auth.user);
+  const isAdminOrLeader = user?.role === "ADMIN" || user?.role === "LEADER";
 
-    const interval = setInterval(loadData, 5000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
+  // Fetch rooms with polling
+  const { data: rooms = [], isLoading } = useRooms();
+  const { mutate: createRoom, isPending: isCreating } = useCreateRoom();
 
-  const handleCreateRoom = async (data: CreateRoomInput) => {
-    setIsCreating(true);
-    try {
-      await new Promise((r) => setTimeout(r, 500));
-      const newRoom: Room = {
-        id: `room-${Date.now()}`,
-        name: data.name,
-        description: data.description,
-        membersCount: 1,
-        tasksCount: 0,
-        completedTasksCount: 0,
-        createdAt: new Date().toISOString(),
-        createdBy: user?.id || "",
-      };
-      setRooms((prev) => [newRoom, ...prev]);
-      setShowCreateRoom(false);
-      addToast("success", "Room created", `"${data.name}" has been created successfully.`);
-    } catch (error) {
-      addToast("error", "Failed to create room", "Please try again.");
-    } finally {
-      setIsCreating(false);
-    }
+  const handleCreateRoom = (data: CreateRoomInput) => {
+    createRoom(data, {
+      onSuccess: () => {
+        setShowCreateRoom(false);
+        toast({
+          title: "Room created",
+          description: `"${data.name}" has been created successfully.`,
+        });
+      },
+      onError: () => {
+        toast({
+          title: "Failed to create room",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      },
+    });
+  };
+
+  // Calculate stats from rooms
+  const stats = {
+    totalTasks: rooms.reduce((sum, room) => sum + room.tasksCount, 0),
+    completedTasks: rooms.reduce((sum, room) => sum + room.completedTasksCount, 0),
+    inProgressTasks: rooms.reduce((sum, room) => sum + (room.tasksCount - room.completedTasksCount), 0),
+    pendingApprovals: 0, // TODO: Get from API
   };
 
   const statCards = [
     {
       label: "Total Tasks",
-      value: stats?.totalTasks || 0,
+      value: stats.totalTasks,
       icon: ListTodo,
       gradient: "from-primary/20 via-primary/10 to-transparent",
       iconBg: "bg-primary/15",
@@ -75,7 +65,7 @@ export default function Dashboard() {
     },
     {
       label: "In Progress",
-      value: stats?.inProgressTasks || 0,
+      value: stats.inProgressTasks,
       icon: Clock,
       gradient: "from-info/20 via-info/10 to-transparent",
       iconBg: "bg-info/15",
@@ -84,7 +74,7 @@ export default function Dashboard() {
     },
     {
       label: "Completed",
-      value: stats?.completedTasks || 0,
+      value: stats.completedTasks,
       icon: CheckCircle,
       gradient: "from-success/20 via-success/10 to-transparent",
       iconBg: "bg-success/15",
@@ -93,7 +83,7 @@ export default function Dashboard() {
     },
     {
       label: "Pending Approvals",
-      value: stats?.pendingApprovals || 0,
+      value: stats.pendingApprovals,
       icon: AlertTriangle,
       gradient: "from-warning/20 via-warning/10 to-transparent",
       iconBg: "bg-warning/15",
@@ -115,7 +105,7 @@ export default function Dashboard() {
         description="Here's an overview of your workspace"
         actions={
           isAdminOrLeader && (
-            <Button 
+            <Button
               onClick={() => setShowCreateRoom(true)}
               className="gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300"
             >
@@ -131,7 +121,7 @@ export default function Dashboard() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 stagger-children">
           {statCards
             .filter((s) => !s.hidden)
-            .map((stat, index) => (
+            .map((stat) => (
               <div
                 key={stat.label}
                 className={cn(
@@ -144,7 +134,7 @@ export default function Dashboard() {
                   "absolute inset-0 bg-gradient-to-br opacity-50",
                   stat.gradient
                 )} />
-                
+
                 <div className="relative flex items-start justify-between">
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
@@ -196,7 +186,7 @@ export default function Dashboard() {
               description="Create your first room to start organizing your projects."
               action={
                 isAdminOrLeader && (
-                  <Button 
+                  <Button
                     onClick={() => setShowCreateRoom(true)}
                     className="gradient-primary border-0"
                   >

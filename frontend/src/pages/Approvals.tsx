@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, useMemo, useEffect } from "react";
 import { CheckCircle, XCircle, Clock, Search } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
@@ -17,16 +17,16 @@ export default function Approvals() {
   const { user } = useAuth();
   const { addToast } = useToastNotification();
 
-  const [tasks, setTasks] = React.useState<Task[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [selectedTask, setSelectedTask] = React.useState<Task | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Load submitted tasks only from rooms where user is admin/leader
-  React.useEffect(() => {
+  useEffect(() => {
     const loadTasks = async () => {
       await new Promise((r) => setTimeout(r, 500));
-      
+
       if (!user) {
         setTasks([]);
         setIsLoading(false);
@@ -39,7 +39,7 @@ export default function Approvals() {
         const roomMembers = MOCK_ROOM_MEMBERS[t.roomId] || [];
         return isAdminOrLeaderInRoom(user.id, roomMembers);
       });
-      
+
       setTasks(submittedTasks);
       setIsLoading(false);
     };
@@ -51,7 +51,7 @@ export default function Approvals() {
   }, [user]);
 
   // Filter tasks
-  const filteredTasks = React.useMemo(() => {
+  const filteredTasks = useMemo(() => {
     return tasks.filter(
       (task) =>
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
