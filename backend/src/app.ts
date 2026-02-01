@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import taskRoutes from './routes/task.routes';
@@ -10,7 +11,9 @@ import { errorMiddleware } from './middlewares/error.middleware';
 const app = express();
 
 // Middleware
+
 app.use(express.json());
+app.use(cors());
 
 // Routes
 app.use('/api/auth', authRoutes);
