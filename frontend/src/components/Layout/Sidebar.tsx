@@ -17,7 +17,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Badge, getRoleVariant } from "@/components/Common/Badge";
 import { ROLE_LABELS } from "@/utils/constants";
-import { MOCK_ROOM_MEMBERS } from "@/data/mockData";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -37,9 +36,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   const hasApprovalAccess = React.useMemo(() => {
     if (!user) return false;
-    return Object.values(MOCK_ROOM_MEMBERS).some((members) =>
-      members.some((m) => m.userId === user.id && (m.role === "ADMIN" || m.role === "LEADER"))
-    );
+    // TODO: Fetch user's room roles from API
+    return user.role === "ADMIN" || user.role === "LEADER";
   }, [user]);
 
   const filteredNavItems = navItems.filter(

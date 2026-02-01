@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth, useRoomRole } from "@/contexts/AuthContext";
 import { useToastNotification } from "@/components/Common/Toast";
-import { MOCK_ROOMS, MOCK_TASKS, MOCK_ROOM_MEMBERS, MOCK_USERS } from "@/data/mockData";
 import { Room, Task, RoomMember, TaskStatus, CreateTaskInput } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
@@ -40,17 +39,10 @@ export default function RoomDetail() {
     const loadData = async () => {
       await new Promise((r) => setTimeout(r, 500));
 
-      const foundRoom = MOCK_ROOMS.find((r) => r.id === roomId);
-      if (!foundRoom) {
-        navigate("/dashboard");
-        addToast("error", "Room not found", "The room you're looking for doesn't exist.");
-        return;
-      }
-
-      setRoom(foundRoom);
-      setTasks(MOCK_TASKS.filter((t) => t.roomId === roomId));
-      setMembers(MOCK_ROOM_MEMBERS[roomId || ""] || []);
-      setIsLoading(false);
+      // TODO: Fetch room data from API
+      navigate("/dashboard");
+      addToast("error", "Room not found", "The room you're looking for doesn't exist.");
+      return;
     };
     loadData();
   }, [roomId, navigate, addToast]);

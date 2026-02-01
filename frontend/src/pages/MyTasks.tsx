@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
 import { TaskList } from "@/components/Task/TaskList";
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToastNotification } from "@/components/Common/Toast";
-import { MOCK_TASKS } from "@/data/mockData";
 import { Task, TaskStatus } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
@@ -26,9 +25,8 @@ export default function MyTasks() {
   useEffect(() => {
     const loadTasks = async () => {
       await new Promise((r) => setTimeout(r, 500));
-      // Filter tasks assigned to current user
-      const userTasks = MOCK_TASKS.filter((t) => t.assigneeId === user?.id);
-      setTasks(userTasks);
+      // TODO: Fetch tasks from API
+      setTasks([]);
       setIsLoading(false);
     };
     loadTasks();
@@ -49,7 +47,7 @@ export default function MyTasks() {
     });
   }, [tasks, searchQuery, statusFilter]);
 
-  const handleStatusChange = (taskId: string, status: TaskStatus, note?: string) => {
+  const handleStatusChange = (taskId: string, status: TaskStatus) => {
     setTasks((prev) =>
       prev.map((task) => {
         if (task.id === taskId) {
@@ -81,15 +79,6 @@ export default function MyTasks() {
   const handleQuickStart = (task: Task) => {
     handleStatusChange(task.id, "IN_PROGRESS");
   };
-
-  const statuses: (TaskStatus | "ALL")[] = [
-    "ALL",
-    "PENDING",
-    "IN_PROGRESS",
-    "SUBMITTED",
-    "APPROVED",
-    "REJECTED",
-  ];
 
   // Task counts by status
   const statusCounts = useMemo(() => {

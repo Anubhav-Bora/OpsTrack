@@ -74,29 +74,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Demo credentials */}
-          <div className="rounded-2xl bg-gradient-to-br from-accent/80 via-accent/50 to-transparent border border-primary/10 p-5 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <p className="text-sm font-semibold text-foreground">Demo Credentials</p>
-            </div>
-            <div className="space-y-2 text-sm">
-              <p className="flex items-center justify-between text-muted-foreground">
-                <span>Admin:</span>
-                <code className="px-2 py-1 bg-background/80 rounded-lg text-foreground font-medium">admin@example.com</code>
-              </p>
-              <p className="flex items-center justify-between text-muted-foreground">
-                <span>Leader:</span>
-                <code className="px-2 py-1 bg-background/80 rounded-lg text-foreground font-medium">leader@example.com</code>
-              </p>
-              <p className="flex items-center justify-between text-muted-foreground">
-                <span>Member:</span>
-                <code className="px-2 py-1 bg-background/80 rounded-lg text-foreground font-medium">member@example.com</code>
-              </p>
-              <p className="text-xs mt-3 text-muted-foreground/70 text-center">Any password works for demo</p>
-            </div>
-          </div>
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">

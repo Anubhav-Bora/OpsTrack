@@ -6,7 +6,6 @@ import { Badge, getStatusVariant, getRoleVariant } from "@/components/Common/Bad
 import { TASK_STATUS_LABELS, ROLE_LABELS } from "@/utils/constants";
 import { useAuth, isAdminOrLeaderInRoom } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { MOCK_ROOM_MEMBERS } from "@/data/mockData";
 
 interface TaskModalProps {
   task: Task;
@@ -22,8 +21,8 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, roomMembers }
   const [rejectionNote, setRejectionNote] = React.useState("");
   const [showRejectForm, setShowRejectForm] = React.useState(false);
 
-  // Get room members - either from props or from mock data
-  const members = roomMembers || MOCK_ROOM_MEMBERS[task.roomId] || [];
+  // Get room members from props
+  const members = roomMembers || [];
   
   // Check if user is admin/leader in this task's room
   const canApproveInRoom = user ? isAdminOrLeaderInRoom(user.id, members) : false;

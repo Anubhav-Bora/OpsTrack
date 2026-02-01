@@ -11,31 +11,6 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo - IDs must match MOCK_USERS in mockData.ts
-const MOCK_USERS: User[] = [
-  {
-    id: "user-1",
-    name: "John Admin",
-    email: "admin@example.com",
-    role: "ADMIN",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "user-2",
-    name: "Sarah Leader",
-    email: "leader@example.com",
-    role: "LEADER",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "user-3",
-    name: "Mike Member",
-    email: "member@example.com",
-    role: "MEMBER",
-    createdAt: new Date().toISOString(),
-  },
-];
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = React.useState<AuthState>({
     user: null,
@@ -69,53 +44,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = React.useCallback(async (input: LoginInput) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Call backend API
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
 
-    // Mock authentication
-    const user = MOCK_USERS.find((u) => u.email === input.email);
-    if (!user) {
-      throw new Error("Invalid email or password");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Invalid email or password");
+      }
+
+      const { user, token } = await response.json();
+
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+
+      setState({
+        user,
+        token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch (error) {
+      throw error instanceof Error ? error : new Error("Login failed");
     }
-
-    // For demo, accept any password
-    const token = `mock_token_${Date.now()}`;
-
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-
-    setState({
-      user,
-      token,
-      isAuthenticated: true,
-      isLoading: false,
-    });
   }, []);
 
   const signup = React.useCallback(async (input: SignupInput) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Call backend API
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
 
-    // Create new user
-    const user: User = {
-      id: `user_${Date.now()}`,
-      name: input.name,
-      email: input.email,
-      role: input.role,
-      createdAt: new Date().toISOString(),
-    };
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Signup failed");
+      }
 
-    const token = `mock_token_${Date.now()}`;
+      const { user, token } = await response.json();
 
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
 
-    setState({
-      user,
-      token,
-      isAuthenticated: true,
-      isLoading: false,
-    });
+      setState({
+        user,
+        token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch (error) {
+      throw error instanceof Error ? error : new Error("Signup failed");
+    }
   }, []);
 
   const logout = React.useCallback(() => {

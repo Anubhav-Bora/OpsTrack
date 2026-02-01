@@ -9,7 +9,6 @@ import { Badge, getStatusVariant } from "@/components/Common/Badge";
 import { EmptyState } from "@/components/Common/EmptyState";
 import { useToastNotification } from "@/components/Common/Toast";
 import { useAuth, isAdminOrLeaderInRoom } from "@/contexts/AuthContext";
-import { MOCK_TASKS, MOCK_ROOM_MEMBERS, MOCK_ROOMS } from "@/data/mockData";
 import { Task, TaskStatus } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
@@ -33,14 +32,8 @@ export default function Approvals() {
         return;
       }
 
-      // Get all tasks that need approval (SUBMITTED status) from rooms where user is admin/leader
-      const submittedTasks = MOCK_TASKS.filter((t) => {
-        if (t.status !== "SUBMITTED") return false;
-        const roomMembers = MOCK_ROOM_MEMBERS[t.roomId] || [];
-        return isAdminOrLeaderInRoom(user.id, roomMembers);
-      });
-
-      setTasks(submittedTasks);
+      // TODO: Fetch tasks that need approval from API
+      setTasks([]);
       setIsLoading(false);
     };
     loadTasks();
