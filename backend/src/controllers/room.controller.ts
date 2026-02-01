@@ -5,11 +5,18 @@ export const roomController = {
     getAllRooms: async (req: Request, res: Response) => {
         try {
             const rooms = await roomService.getAllRooms();
-            res.json(rooms);
+            const transformedRooms = rooms.map(room => ({
+                ...room,
+                membersCount: room._count.members,
+                tasksCount: room._count.tasks,
+                completedTasksCount: room.tasks.filter(t => t.status === 'APPROVED').length,
+            }));
+            res.json(transformedRooms);
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch rooms' });
         }
     },
+
 
     getRoomById: async (req: Request, res: Response) => {
         try {

@@ -10,6 +10,12 @@ export const roomRepo = {
                     include: { user: true },
                 },
                 tasks: true,
+                _count: {
+                    select: {
+                        members: true,
+                        tasks: true
+                    }
+                }
             },
         }),
 
