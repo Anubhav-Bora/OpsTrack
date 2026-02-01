@@ -11,9 +11,19 @@ export function useTasks() {
     return useQuery({
         queryKey: ['tasks'],
         queryFn: async () => {
-            const data = await get<Task[]>('/tasks');
-            dispatch(setTasks(data));
-            return data;
+            const data = await get<any[]>('/tasks');
+            const transformed = data.map(task => ({
+                ...task,
+                id: String(task.id),
+                roomId: String(task.roomId),
+                assigneeId: task.assignedTo ? String(task.assignedTo) : undefined,
+                assignee: task.assignee ? {
+                    ...task.assignee,
+                    id: String(task.assignee.id),
+                } : undefined,
+            })) as Task[];
+            dispatch(setTasks(transformed));
+            return transformed;
         },
         refetchInterval: 5000,
         refetchOnWindowFocus: true,
@@ -27,9 +37,19 @@ export function useTasksByRoom(roomId: number) {
     return useQuery({
         queryKey: ['tasks', 'room', roomId],
         queryFn: async () => {
-            const data = await get<Task[]>(`/tasks/room/${roomId}`);
-            dispatch(setTasks(data));
-            return data;
+            const data = await get<any[]>(`/tasks/room/${roomId}`);
+            const transformed = data.map(task => ({
+                ...task,
+                id: String(task.id),
+                roomId: String(task.roomId),
+                assigneeId: task.assignedTo ? String(task.assignedTo) : undefined,
+                assignee: task.assignee ? {
+                    ...task.assignee,
+                    id: String(task.assignee.id),
+                } : undefined,
+            })) as Task[];
+            dispatch(setTasks(transformed));
+            return transformed;
         },
         refetchInterval: 5000,
         refetchOnWindowFocus: true,
@@ -39,7 +59,15 @@ export function useTasksByRoom(roomId: number) {
 
 export function useCreateTask() {
     return useMutation({
-        mutationFn: (data: CreateTaskInput) => post<Task>('/tasks', data),
+        mutationFn: (data: CreateTaskInput & { roomId: string }) =>
+            post<Task>('/tasks', {
+                title: data.title,
+                description: data.description,
+                requiredRole: data.requiredRole || 'BACKEND',
+                roomId: Number(data.roomId),
+                dueDate: data.dueDate,
+                assignedTo: data.assigneeId ? Number(data.assigneeId) : undefined,
+            }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
         },
@@ -48,8 +76,8 @@ export function useCreateTask() {
 
 export function useApproveTask() {
     return useMutation({
-        mutationFn: ({ taskId, roomId }: { taskId: number; roomId: number }) =>
-            put<Task>(`/tasks/${taskId}/approve`, { roomId }),
+        mutationFn: ({ taskId, roomId }: { taskId: string; roomId: string }) =>
+            put<Task>(`/tasks/${taskId}/approve`, { roomId: Number(roomId) }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
         },
@@ -58,8 +86,8 @@ export function useApproveTask() {
 
 export function useRejectTask() {
     return useMutation({
-        mutationFn: ({ taskId, roomId }: { taskId: number; roomId: number }) =>
-            put<Task>(`/tasks/${taskId}/reject`, { roomId }),
+        mutationFn: ({ taskId, roomId, rejectionNote }: { taskId: string; roomId: string; rejectionNote?: string }) =>
+            put<Task>(`/tasks/${taskId}/reject`, { roomId: Number(roomId), rejectionNote }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
         },

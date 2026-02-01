@@ -9,12 +9,12 @@ export const roomService = {
         return await roomRepo.getRoomById(id);
     },
 
-    createRoom: async (name: string, createdBy: number) => {
-        return await roomRepo.createRoom(name, createdBy);
+    createRoom: async (name: string, description: string | undefined, createdBy: number) => {
+        return await roomRepo.createRoom(name, description, createdBy);
     },
 
-    updateRoom: async (id: number, name: string) => {
-        return await roomRepo.updateRoom(id, name);
+    updateRoom: async (id: number, name: string, description?: string) => {
+        return await roomRepo.updateRoom(id, name, description);
     },
 
     deleteRoom: async (id: number) => {

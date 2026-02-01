@@ -3,9 +3,9 @@ import { TaskStatus, UserRole } from '@prisma/client'
 
 export const taskRepo = {
     //create new task
-    createTask: (title: string, requiredRole: UserRole, roomId: number) =>
+    createTask: (title: string, description: string | undefined, requiredRole: UserRole, roomId: number, dueDate?: Date) =>
         prisma.task.create({
-            data: { title, requiredRole, roomId },
+            data: { title, description, requiredRole, roomId, dueDate },
         }),
 
     //get all tasks
@@ -58,11 +58,13 @@ export const taskRepo = {
         }),
 
     //reject task
-    rejectTask: (id: number) =>
+    rejectTask: (id: number, rejectionNote?: string) =>
         prisma.task.update({
             where: { id },
             data: {
-                status: 'PENDING',
+                status: 'REJECTED',
+                rejectedAt: new Date(),
+                rejectionNote,
             },
         }),
 
@@ -93,7 +95,7 @@ export const taskRepo = {
     //get completed tasks with completion info
     getCompletedTasks: (roomId: number) =>
         prisma.task.findMany({
-            where: { roomId, status: 'DONE' as TaskStatus },
+            where: { roomId, status: 'APPROVED' as TaskStatus },
             include: { assignee: true },
         }),
 

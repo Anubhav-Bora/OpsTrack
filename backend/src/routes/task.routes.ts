@@ -4,12 +4,17 @@ import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-router.get('/', authMiddleware, taskController.getAllTasks);
+// Specific routes first (before :id)
+router.get('/assignee/my-tasks', authMiddleware, taskController.getTasksByAssignee);
 router.get('/room/:roomId', authMiddleware, taskController.getTasksByRoom);
 router.get('/completed/:roomId', authMiddleware, taskController.getCompletedTasks);
-router.get('/assignee/my-tasks', authMiddleware, taskController.getTasksByAssignee);
-router.get('/:id', authMiddleware, taskController.getTaskById);
+
+// General routes
+router.get('/', authMiddleware, taskController.getAllTasks);
 router.post('/', authMiddleware, taskController.createTask);
+
+// ID-based routes (after specific routes)
+router.get('/:id', authMiddleware, taskController.getTaskById);
 router.put('/:id/status', authMiddleware, taskController.updateTaskStatus);
 router.put('/:id/assign', authMiddleware, taskController.assignTask);
 router.put('/:id/submit', authMiddleware, taskController.completeTask);

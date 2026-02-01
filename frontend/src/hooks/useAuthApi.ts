@@ -14,6 +14,8 @@ export function useLogin() {
             localStorage.setItem(AUTH_TOKEN_KEY, data.token);
             localStorage.setItem(USER_KEY, JSON.stringify(data.user));
             dispatch(loginSuccess(data));
+            // Notify AuthContext about the auth update
+            window.dispatchEvent(new Event('auth-updated'));
         },
     });
 }
@@ -27,6 +29,8 @@ export function useSignup() {
             localStorage.setItem(AUTH_TOKEN_KEY, data.token);
             localStorage.setItem(USER_KEY, JSON.stringify(data.user));
             dispatch(loginSuccess(data));
+            // Notify AuthContext about the auth update
+            window.dispatchEvent(new Event('auth-updated'));
         },
     });
 }

@@ -20,7 +20,7 @@ export default function Dashboard() {
 
   // Get user and auth state from Redux
   const user = useAppSelector((state) => state.auth.user);
-  const isAdminOrLeader = user?.role === "ADMIN" || user?.role === "LEADER";
+  const isAdminOrLeader = user?.role === "ADMIN";
 
   // Fetch rooms with polling
   const { data: rooms = [], isLoading } = useRooms();
@@ -50,7 +50,7 @@ export default function Dashboard() {
     totalTasks: rooms.reduce((sum, room) => sum + room.tasksCount, 0),
     completedTasks: rooms.reduce((sum, room) => sum + room.completedTasksCount, 0),
     inProgressTasks: rooms.reduce((sum, room) => sum + (room.tasksCount - room.completedTasksCount), 0),
-    pendingApprovals: 0, // TODO: Get from API
+    pendingApprovals: 0, // Will be fetched from API if needed
   };
 
   const statCards = [

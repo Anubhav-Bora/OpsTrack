@@ -27,8 +27,14 @@ export const taskController = {
 
     createTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { title, requiredRole, roomId } = req.body;
-            const task = await taskService.createTask(title, requiredRole, roomId, req.userId!);
+            const { title, description, requiredRole = 'BACKEND', roomId, dueDate } = req.body;
+            if (!title) {
+                return res.status(400).json({ error: 'Title is required' });
+            }
+            if (!roomId) {
+                return res.status(400).json({ error: 'Room ID is required' });
+            }
+            const task = await taskService.createTask(title, description, requiredRole, roomId, dueDate, req.userId!);
             res.status(201).json(task);
         } catch (error: any) {
             res.status(400).json({ error: error.message });
@@ -81,8 +87,8 @@ export const taskController = {
     rejectTask: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
-            const { roomId } = req.body;
-            const task = await taskService.rejectTask(Number(id), req.userId!, roomId);
+            const { roomId, rejectionNote } = req.body;
+            const task = await taskService.rejectTask(Number(id), req.userId!, roomId, rejectionNote);
             res.json(task);
         } catch (error: any) {
             res.status(400).json({ error: error.message });

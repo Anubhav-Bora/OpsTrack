@@ -36,11 +36,11 @@ export const roomMemberController = {
     addMemberToRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { userId, roomId, role } = req.body;
-            const canPromote = await authorizationService.canPromoteMembers(req.userId!, roomId);
+            const canPromote = await authorizationService.canPromoteMembers(req.userId!, Number(roomId));
             if (!canPromote) {
                 return res.status(403).json({ error: 'You do not have permission to add members' });
             }
-            const member = await roomMemberService.addMemberToRoom(userId, roomId, role);
+            const member = await roomMemberService.addMemberToRoom(Number(userId), Number(roomId), role);
             res.status(201).json(member);
         } catch (error: any) {
             res.status(400).json({ error: error.message });

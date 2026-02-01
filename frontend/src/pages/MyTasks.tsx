@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
@@ -6,35 +6,51 @@ import { TaskList } from "@/components/Task/TaskList";
 import { TaskModal } from "@/components/Task/TaskModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToastNotification } from "@/components/Common/Toast";
+import { useMyTasks } from "@/hooks/useMyTasks";
+import { useUpdateTaskStatus, useSubmitTask } from "@/hooks/useTaskStatus";
 import { Task, TaskStatus } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
 export default function MyTasks() {
-  const { user } = useAuth();
   const { addToast } = useToastNotification();
 
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
 
   // Load user's tasks
-  useEffect(() => {
-    const loadTasks = async () => {
-      await new Promise((r) => setTimeout(r, 500));
-      // TODO: Fetch tasks from API
-      setTasks([]);
-      setIsLoading(false);
-    };
-    loadTasks();
+  const { data: tasks = [], isLoading } = useMyTasks();
+  const { mutate: updateStatus } = useUpdateTaskStatus();
+  const { mutate: submitTask } = useSubmitTask();
 
-    // Polling
-    const interval = setInterval(loadTasks, 5000);
-    return () => clearInterval(interval);
-  }, [user?.id]);
+  const handleStatusChange = (taskId: string, status: TaskStatus) => {
+    updateStatus({ taskId, status }, {
+      onSuccess: () => {
+        setSelectedTask(null);
+        addToast("success", "Task updated", `Task status changed to ${TASK_STATUS_LABELS[status]}.`);
+      },
+      onError: (error) => {
+        addToast("error", "Failed to update task", error instanceof Error ? error.message : "Please try again.");
+      },
+    });
+  };
+
+  // Quick action buttons for task cards
+  const handleQuickSubmit = (task: Task) => {
+    submitTask({ taskId: task.id }, {
+      onSuccess: () => {
+        addToast("success", "Task submitted", "Task has been submitted for approval.");
+      },
+      onError: (error) => {
+        addToast("error", "Failed to submit task", error instanceof Error ? error.message : "Please try again.");
+      },
+    });
+  };
+
+  const handleQuickStart = (task: Task) => {
+    handleStatusChange(task.id, "IN_PROGRESS");
+  };
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
@@ -46,39 +62,6 @@ export default function MyTasks() {
       return matchesSearch && matchesStatus;
     });
   }, [tasks, searchQuery, statusFilter]);
-
-  const handleStatusChange = (taskId: string, status: TaskStatus) => {
-    setTasks((prev) =>
-      prev.map((task) => {
-        if (task.id === taskId) {
-          const updates: Partial<Task> = {
-            status,
-            updatedAt: new Date().toISOString(),
-          };
-          if (status === "SUBMITTED") updates.submittedAt = new Date().toISOString();
-          if (status === "IN_PROGRESS") {
-            // Clear rejection if resubmitting
-            updates.rejectedAt = undefined;
-            updates.rejectionNote = undefined;
-          }
-          return { ...task, ...updates };
-        }
-        return task;
-      })
-    );
-
-    setSelectedTask(null);
-    addToast("success", "Task updated", `Task status changed to ${TASK_STATUS_LABELS[status]}.`);
-  };
-
-  // Quick action buttons for task cards
-  const handleQuickSubmit = (task: Task) => {
-    handleStatusChange(task.id, "SUBMITTED");
-  };
-
-  const handleQuickStart = (task: Task) => {
-    handleStatusChange(task.id, "IN_PROGRESS");
-  };
 
   // Task counts by status
   const statusCounts = useMemo(() => {

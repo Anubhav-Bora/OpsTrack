@@ -11,12 +11,12 @@ export const taskService = {
         return await taskRepo.getTaskbyId(id);
     },
 
-    createTask: async (title: string, requiredRole: UserRole, roomId: number, userId: number) => {
+    createTask: async (title: string, description: string | undefined, requiredRole: UserRole, roomId: number, dueDate: string | undefined, userId: number) => {
         const canAssign = await authorizationService.canAssignTasks(userId, roomId);
         if (!canAssign) {
             throw new Error('You do not have permission to create tasks in this room');
         }
-        return await taskRepo.createTask(title, requiredRole, roomId);
+        return await taskRepo.createTask(title, description, requiredRole, roomId, dueDate ? new Date(dueDate) : undefined);
     },
 
     updateTaskStatus: async (id: number, status: TaskStatus) => {
@@ -44,10 +44,10 @@ export const taskService = {
         return await taskRepo.approveTask(id, userId);
     },
 
-    rejectTask: async (id: number, userId: number, roomId: number) => {
+    rejectTask: async (id: number, userId: number, roomId: number, rejectionNote?: string) => {
         const canApprove = await authorizationService.canApproveTasks(userId, roomId);
         if (!canApprove) throw new Error('You do not have permission to reject tasks');
-        return await taskRepo.rejectTask(id);
+        return await taskRepo.rejectTask(id, rejectionNote);
     },
 
     deleteTask: async (id: number) => {

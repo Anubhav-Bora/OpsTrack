@@ -17,7 +17,7 @@ export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("MEMBER");
+  const [role, setRole] = useState<UserRole>("BACKEND");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,13 +57,15 @@ export default function Signup() {
       addToast("success", "Account created!", "Welcome to Workspace.");
       navigate("/dashboard");
     } catch (error) {
-      addToast("error", "Signup failed", error instanceof Error ? error.message : "Please try again.");
+      console.error("Signup error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Please try again.";
+      addToast("error", "Signup failed", errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const roles: UserRole[] = ["MEMBER", "LEADER", "ADMIN"];
+  const roles: UserRole[] = ["BACKEND", "FRONTEND", "DEVOPS", "CYBERSECURITY", "ADMIN"];
 
   return (
     <div className="min-h-screen flex">
@@ -170,8 +172,8 @@ export default function Signup() {
                     type="button"
                     onClick={() => setRole(r)}
                     className={`p-3 rounded-lg border text-center transition-all ${role === r
-                        ? "border-primary bg-primary/5 text-primary"
-                        : "border-border hover:border-primary/50"
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border hover:border-primary/50"
                       }`}
                   >
                     <Briefcase className="h-5 w-5 mx-auto mb-1" />

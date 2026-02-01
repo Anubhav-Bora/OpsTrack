@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Users, ListTodo, BarChart3, Search, Filter } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
@@ -7,11 +7,16 @@ import { TaskList } from "@/components/Task/TaskList";
 import { TaskModal } from "@/components/Task/TaskModal";
 import { TaskForm } from "@/components/Task/TaskForm";
 import { MembersList } from "@/components/Room/MembersList";
+import { AddMemberModal } from "@/components/Room/AddMemberModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth, useRoomRole } from "@/contexts/AuthContext";
 import { useToastNotification } from "@/components/Common/Toast";
+import { useRoomDetail, useRoomTasks, useRoomMembers } from "@/hooks/useRoomDetail";
+import { useCreateTask, useApproveTask, useRejectTask } from "@/hooks/useTasks";
+import { useUpdateMemberRole, useRemoveMember } from "@/hooks/useMemberManagement";
+import { useAddMember, useAllUsers } from "@/hooks/useAddMember";
 import { Room, Task, RoomMember, TaskStatus, CreateTaskInput } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
@@ -21,31 +26,29 @@ export default function RoomDetail() {
   const { user } = useAuth();
   const { addToast } = useToastNotification();
 
-  const [room, setRoom] = useState<Room | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [members, setMembers] = useState<RoomMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateTask, setShowCreateTask] = useState(false);
-  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
 
+  // Fetch data
+  const { data: room, isLoading: roomLoading } = useRoomDetail(Number(roomId));
+  const { data: tasks = [], isLoading: tasksLoading } = useRoomTasks(Number(roomId));
+  const { data: members = [] } = useRoomMembers(Number(roomId));
+  const { data: allUsers = [] } = useAllUsers();
+  const { mutate: createTask, isPending: isCreatingTask } = useCreateTask();
+  const { mutate: approveTask } = useApproveTask();
+  const { mutate: rejectTask } = useRejectTask();
+  const { mutate: updateMemberRole } = useUpdateMemberRole();
+  const { mutate: removeMember } = useRemoveMember();
+  const { mutate: addMember, isPending: isAddingMember } = useAddMember();
+
   // Get room-specific permissions
   const { isRoomAdminOrLeader, isRoomAdmin } = useRoomRole(members);
-
-  // Load data
-  useEffect(() => {
-    const loadData = async () => {
-      await new Promise((r) => setTimeout(r, 500));
-
-      // TODO: Fetch room data from API
-      navigate("/dashboard");
-      addToast("error", "Room not found", "The room you're looking for doesn't exist.");
-      return;
-    };
-    loadData();
-  }, [roomId, navigate, addToast]);
+  
+  // Allow global admins or room admins to manage members
+  const canManageMembers = user?.role === "ADMIN" || isRoomAdmin;
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
@@ -58,81 +61,95 @@ export default function RoomDetail() {
   }, [tasks, searchQuery, statusFilter]);
 
   const handleStatusChange = (taskId: string, status: TaskStatus, note?: string) => {
-    setTasks((prev) =>
-      prev.map((task) => {
-        if (task.id === taskId) {
-          const updates: Partial<Task> = {
-            status,
-            updatedAt: new Date().toISOString(),
-          };
-          if (status === "SUBMITTED") updates.submittedAt = new Date().toISOString();
-          if (status === "APPROVED") updates.approvedAt = new Date().toISOString();
-          if (status === "REJECTED") {
-            updates.rejectedAt = new Date().toISOString();
-            updates.rejectionNote = note;
-          }
-          return { ...task, ...updates };
-        }
-        return task;
-      })
-    );
-
-    setSelectedTask(null);
-    addToast("success", "Task updated", `Task status changed to ${TASK_STATUS_LABELS[status]}.`);
-  };
-
-  const handleCreateTask = async (data: CreateTaskInput) => {
-    setIsCreatingTask(true);
-    try {
-      await new Promise((r) => setTimeout(r, 500));
-
-      const assignee = data.assigneeId
-        ? MOCK_USERS.find((u) => u.id === data.assigneeId)
-        : undefined;
-
-      const newTask: Task = {
-        id: `task-${Date.now()}`,
-        title: data.title,
-        description: data.description,
-        status: "PENDING",
-        assigneeId: data.assigneeId,
-        assignee,
-        roomId: roomId || "",
-        dueDate: data.dueDate,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setTasks((prev) => [newTask, ...prev]);
-      setShowCreateTask(false);
-      addToast("success", "Task created", `"${data.title}" has been created.`);
-    } catch (error) {
-      addToast("error", "Failed to create task", "Please try again.");
-    } finally {
-      setIsCreatingTask(false);
+    if (status === "APPROVED") {
+      approveTask({ taskId, roomId: room?.id || "" }, {
+        onSuccess: () => {
+          setSelectedTask(null);
+          addToast("success", "Task approved", "Task has been approved successfully.");
+        },
+        onError: (error) => {
+          addToast("error", "Failed to approve", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
+    } else if (status === "REJECTED") {
+      rejectTask({ taskId, roomId: room?.id || "", rejectionNote: note }, {
+        onSuccess: () => {
+          setSelectedTask(null);
+          addToast("success", "Task rejected", "Task has been sent back for revision.");
+        },
+        onError: (error) => {
+          addToast("error", "Failed to reject", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
     }
   };
 
+  const handleCreateTask = (data: CreateTaskInput) => {
+    createTask({ ...data, roomId: room?.id || "" }, {
+      onSuccess: () => {
+        setShowCreateTask(false);
+        addToast("success", "Task created", `"${data.title}" has been created.`);
+      },
+      onError: (error) => {
+        addToast("error", "Failed to create task", error instanceof Error ? error.message : "Please try again.");
+      },
+    });
+  };
+
   const handlePromoteMember = (memberId: string) => {
-    setMembers((prev) =>
-      prev.map((m) => (m.id === memberId ? { ...m, role: "LEADER" } : m))
-    );
-    addToast("success", "Member promoted", "Member has been promoted to Leader.");
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+    updateMemberRole({ userId: member.userId, roomId: room?.id || "", role: "LEADER" }, {
+      onSuccess: () => {
+        addToast("success", "Member promoted", "Member has been promoted to Leader.");
+      },
+      onError: (error) => {
+        addToast("error", "Failed to promote", error instanceof Error ? error.message : "Please try again.");
+      },
+    });
   };
 
   const handleDemoteMember = (memberId: string) => {
-    setMembers((prev) =>
-      prev.map((m) => (m.id === memberId ? { ...m, role: "MEMBER" } : m))
-    );
-    addToast("success", "Member demoted", "Leader has been demoted to Member.");
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+    updateMemberRole({ userId: member.userId, roomId: room?.id || "", role: "MEMBER" }, {
+      onSuccess: () => {
+        addToast("success", "Member demoted", "Leader has been demoted to Member.");
+      },
+      onError: (error) => {
+        addToast("error", "Failed to demote", error instanceof Error ? error.message : "Please try again.");
+      },
+    });
+  };
+
+  const handleAddMembers = (userIds: string[]) => {
+    const roomIdStr = room?.id.toString() || "";
+    userIds.forEach((userId) => {
+      addMember({ userId, roomId: roomIdStr }, {
+        onSuccess: () => {
+          addToast("success", "Member added", "Member has been added to the room.");
+        },
+        onError: (error) => {
+          addToast("error", "Failed to add member", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
+    });
   };
 
   const handleRemoveMember = (memberId: string) => {
-    setMembers((prev) => prev.filter((m) => m.id !== memberId));
-    addToast("success", "Member removed", "Member has been removed from the room.");
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+    removeMember({ userId: member.userId, roomId: room?.id || "" }, {
+      onSuccess: () => {
+        addToast("success", "Member removed", "Member has been removed from the room.");
+      },
+      onError: (error) => {
+        addToast("error", "Failed to remove", error instanceof Error ? error.message : "Please try again.");
+      },
+    });
   };
 
-  if (isLoading || !room) {
+  if (roomLoading || !room) {
     return (
       <Layout>
         <div className="p-6">
@@ -158,7 +175,7 @@ export default function RoomDetail() {
           { label: room.name },
         ]}
         actions={
-          isRoomAdminOrLeader && (
+          (isRoomAdminOrLeader || user?.role === "ADMIN") && (
             <Button onClick={() => setShowCreateTask(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Task
@@ -227,12 +244,20 @@ export default function RoomDetail() {
           </TabsContent>
 
           {/* Members Tab */}
-          <TabsContent value="members">
+          <TabsContent value="members" className="space-y-4">
+            {canManageMembers && (
+              <div className="flex justify-end">
+                <Button onClick={() => setShowAddMember(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Member
+                </Button>
+              </div>
+            )}
             <MembersList
               members={members}
-              onPromote={isRoomAdmin ? handlePromoteMember : undefined}
-              onDemote={isRoomAdmin ? handleDemoteMember : undefined}
-              onRemove={isRoomAdmin ? handleRemoveMember : undefined}
+              onPromote={canManageMembers ? handlePromoteMember : undefined}
+              onDemote={canManageMembers ? handleDemoteMember : undefined}
+              onRemove={canManageMembers ? handleRemoveMember : undefined}
             />
           </TabsContent>
 
@@ -299,6 +324,16 @@ export default function RoomDetail() {
         onSubmit={handleCreateTask}
         members={memberUsers}
         isLoading={isCreatingTask}
+      />
+
+      {/* Add Member Modal */}
+      <AddMemberModal
+        open={showAddMember}
+        onOpenChange={setShowAddMember}
+        availableUsers={allUsers}
+        currentMembers={members.map(m => m.userId)}
+        isLoading={isAddingMember}
+        onAddMembers={handleAddMembers}
       />
     </Layout>
   );

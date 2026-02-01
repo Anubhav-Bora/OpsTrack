@@ -1,10 +1,11 @@
 import * as React from "react";
 import { X } from "lucide-react";
-import { CreateTaskInput, User } from "@/types";
+import { CreateTaskInput, User, UserRole } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ROLE_LABELS } from "@/utils/constants";
 
 interface TaskFormProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading }:
   const [formData, setFormData] = React.useState<CreateTaskInput>({
     title: "",
     description: "",
+    requiredRole: "BACKEND",
     assigneeId: "",
     dueDate: "",
   });
@@ -25,7 +27,7 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading }:
 
   React.useEffect(() => {
     if (!isOpen) {
-      setFormData({ title: "", description: "", assigneeId: "", dueDate: "" });
+      setFormData({ title: "", description: "", requiredRole: "BACKEND", assigneeId: "", dueDate: "" });
       setErrors({});
     }
   }, [isOpen]);
@@ -88,6 +90,22 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading }:
               placeholder="Enter task description"
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="requiredRole">Required Role</Label>
+            <select
+              id="requiredRole"
+              value={formData.requiredRole || "BACKEND"}
+              onChange={(e) => setFormData((prev) => ({ ...prev, requiredRole: e.target.value }))}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="BACKEND">Backend</option>
+              <option value="FRONTEND">Frontend</option>
+              <option value="DEVOPS">DevOps</option>
+              <option value="CYBERSECURITY">Cybersecurity</option>
+              <option value="ADMIN">Admin</option>
+            </select>
           </div>
 
           <div className="space-y-2">

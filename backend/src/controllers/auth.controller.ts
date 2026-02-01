@@ -9,7 +9,9 @@ export const authController = {
             const result = await authService.signup(validated.name, validated.email, validated.password, validated.role);
             res.status(201).json(result);
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            console.error('Signup error:', error);
+            const message = error.message || 'Signup failed';
+            res.status(400).json({ error: message });
         }
     },
 
@@ -19,7 +21,9 @@ export const authController = {
             const result = await authService.signin(validated.email, validated.password);
             res.json(result);
         } catch (error: any) {
-            res.status(401).json({ error: error.message });
+            console.error('Signin error:', error);
+            const message = error.message || 'Signin failed';
+            res.status(401).json({ error: message });
         }
     },
 };

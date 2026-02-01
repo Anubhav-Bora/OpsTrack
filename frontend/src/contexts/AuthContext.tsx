@@ -1,6 +1,6 @@
 import * as React from "react";
 import { User, AuthState, LoginInput, SignupInput, RoomMember } from "@/types";
-import { AUTH_TOKEN_KEY, USER_KEY } from "@/utils/constants";
+import { AUTH_TOKEN_KEY, USER_KEY, API_BASE_URL } from "@/utils/constants";
 
 interface AuthContextType extends AuthState {
   login: (input: LoginInput) => Promise<void>;
@@ -19,42 +19,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   });
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount and when it changes
   React.useEffect(() => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    const userStr = localStorage.getItem(USER_KEY);
+    const loadAuthState = () => {
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
+      const userStr = localStorage.getItem(USER_KEY);
 
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(userStr) as User;
-        setState({
-          user,
-          token,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-      } catch {
-        localStorage.removeItem(AUTH_TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr) as User;
+          setState({
+            user,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } catch {
+          localStorage.removeItem(AUTH_TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          setState((prev) => ({ ...prev, isLoading: false }));
+        }
+      } else {
         setState((prev) => ({ ...prev, isLoading: false }));
       }
-    } else {
-      setState((prev) => ({ ...prev, isLoading: false }));
-    }
+    };
+
+    loadAuthState();
+
+    // Listen for storage changes (when login happens in useAuthApi)
+    const handleStorageChange = () => {
+      loadAuthState();
+    };
+
+    // Listen for custom auth-updated event (fired when login happens in same tab)
+    const handleAuthUpdated = () => {
+      loadAuthState();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-updated', handleAuthUpdated);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-updated', handleAuthUpdated);
+    };
   }, []);
 
   const login = React.useCallback(async (input: LoginInput) => {
     try {
       // Call backend API
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Invalid email or password");
+        const errorText = await response.text();
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: errorText || "Authentication failed" };
+        }
+        throw new Error(error.error || error.message || "Invalid email or password");
       }
 
       const { user, token } = await response.json();
@@ -76,15 +103,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = React.useCallback(async (input: SignupInput) => {
     try {
       // Call backend API
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Signup failed");
+        const errorText = await response.text();
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: errorText || "Signup failed" };
+        }
+        throw new Error(error.error || error.message || "Signup failed");
       }
 
       const { user, token } = await response.json();

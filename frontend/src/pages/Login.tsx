@@ -41,7 +41,10 @@ export default function Login() {
       {
         onSuccess: () => {
           addToast("success", "Welcome back!", "You have been logged in successfully.");
-          navigate("/dashboard");
+          // Add a small delay to ensure auth state is updated
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 100);
         },
         onError: (error) => {
           addToast("error", "Login failed", error instanceof Error ? error.message : "Please try again.");

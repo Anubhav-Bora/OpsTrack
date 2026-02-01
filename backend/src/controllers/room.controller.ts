@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { roomService } from '../services/room.service';
+import { AuthRequest } from '../middlewares/auth.middleware';
 
 export const roomController = {
-    getAllRooms: async (req: Request, res: Response) => {
+    getAllRooms: async (req: AuthRequest, res: Response) => {
         try {
             const rooms = await roomService.getAllRooms();
             const transformedRooms = rooms.map(room => ({
@@ -18,7 +19,7 @@ export const roomController = {
     },
 
 
-    getRoomById: async (req: Request, res: Response) => {
+    getRoomById: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             const room = await roomService.getRoomById(Number(id));
@@ -31,28 +32,28 @@ export const roomController = {
         }
     },
 
-    createRoom: async (req: Request, res: Response) => {
+    createRoom: async (req: AuthRequest, res: Response) => {
         try {
-            const { name, createdBy } = req.body;
-            const room = await roomService.createRoom(name, createdBy);
+            const { name, description } = req.body;
+            const room = await roomService.createRoom(name, description, req.userId!);
             res.status(201).json(room);
         } catch (error) {
             res.status(400).json({ error: 'Failed to create room' });
         }
     },
 
-    updateRoom: async (req: Request, res: Response) => {
+    updateRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
-            const { name } = req.body;
-            const room = await roomService.updateRoom(Number(id), name);
+            const { name, description } = req.body;
+            const room = await roomService.updateRoom(Number(id), name, description);
             res.json(room);
         } catch (error) {
             res.status(400).json({ error: 'Failed to update room' });
         }
     },
 
-    deleteRoom: async (req: Request, res: Response) => {
+    deleteRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             await roomService.deleteRoom(Number(id));

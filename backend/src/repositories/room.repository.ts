@@ -33,17 +33,17 @@ export const roomRepo = {
         }),
 
     // Create a new room
-    createRoom: (name: string, createdBy: number) =>
+    createRoom: (name: string, description: string | undefined, createdBy: number) =>
         prisma.room.create({
-            data: { name, createdBy },
+            data: { name, description, createdBy },
             include: { creator: true },
         }),
 
     // Update room
-    updateRoom: (id: number, name: string) =>
+    updateRoom: (id: number, name: string, description?: string) =>
         prisma.room.update({
             where: { id },
-            data: { name },
+            data: { name, ...(description !== undefined && { description }) },
         }),
 
     // Delete room

@@ -1,6 +1,7 @@
-export type UserRole = 'ADMIN' | 'LEADER' | 'MEMBER';
+export type UserRole = 'ADMIN' | 'BACKEND' | 'FRONTEND' | 'DEVOPS' | 'CYBERSECURITY';
+export type RoomRole = 'ADMIN' | 'LEADER' | 'MEMBER';
 
-export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'BLOCKED';
 
 export interface User {
   id: string;
@@ -45,7 +46,7 @@ export interface RoomMember {
   userId: string;
   user: User;
   roomId: string;
-  role: UserRole;
+  role: RoomRole;
   joinedAt: string;
 }
 
@@ -80,6 +81,7 @@ export interface PaginatedResponse<T> {
 export interface CreateTaskInput {
   title: string;
   description?: string;
+  requiredRole?: string;
   assigneeId?: string;
   dueDate?: string;
   dependencies?: string[];

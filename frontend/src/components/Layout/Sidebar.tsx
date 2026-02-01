@@ -36,8 +36,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   const hasApprovalAccess = React.useMemo(() => {
     if (!user) return false;
-    // TODO: Fetch user's room roles from API
-    return user.role === "ADMIN" || user.role === "LEADER";
+    // User has approval access if they are ADMIN
+    return user.role === "ADMIN";
   }, [user]);
 
   const filteredNavItems = navItems.filter(
@@ -101,8 +101,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               >
                 <div className={cn(
                   "rounded-lg p-1.5 transition-all duration-200",
-                  isActive 
-                    ? "bg-primary text-white shadow-lg shadow-primary/30" 
+                  isActive
+                    ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "bg-sidebar-accent text-sidebar-muted group-hover:bg-sidebar-primary/20 group-hover:text-sidebar-foreground"
                 )}>
                   <item.icon className="h-4 w-4" />

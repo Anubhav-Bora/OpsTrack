@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { CheckCircle, XCircle, Clock, Search } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
@@ -8,40 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Badge, getStatusVariant } from "@/components/Common/Badge";
 import { EmptyState } from "@/components/Common/EmptyState";
 import { useToastNotification } from "@/components/Common/Toast";
-import { useAuth, isAdminOrLeaderInRoom } from "@/contexts/AuthContext";
+import { useSubmittedTasks, useApproveTaskMutation, useRejectTaskMutation } from "@/hooks/useApprovals";
 import { Task, TaskStatus } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
 export default function Approvals() {
-  const { user } = useAuth();
   const { addToast } = useToastNotification();
 
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Load submitted tasks only from rooms where user is admin/leader
-  useEffect(() => {
-    const loadTasks = async () => {
-      await new Promise((r) => setTimeout(r, 500));
-
-      if (!user) {
-        setTasks([]);
-        setIsLoading(false);
-        return;
-      }
-
-      // TODO: Fetch tasks that need approval from API
-      setTasks([]);
-      setIsLoading(false);
-    };
-    loadTasks();
-
-    // Polling
-    const interval = setInterval(loadTasks, 5000);
-    return () => clearInterval(interval);
-  }, [user]);
+  // Load submitted tasks
+  const { data: tasks = [], isLoading } = useSubmittedTasks();
+  const { mutate: approveTask } = useApproveTaskMutation();
+  const { mutate: rejectTask } = useRejectTaskMutation();
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
@@ -54,13 +34,26 @@ export default function Approvals() {
   }, [tasks, searchQuery]);
 
   const handleStatusChange = (taskId: string, status: TaskStatus, note?: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    setSelectedTask(null);
-
     if (status === "APPROVED") {
-      addToast("success", "Task approved", "The task has been approved successfully.");
+      approveTask({ taskId, roomId: tasks.find(t => t.id === taskId)?.roomId || "" }, {
+        onSuccess: () => {
+          setSelectedTask(null);
+          addToast("success", "Task approved", "The task has been approved successfully.");
+        },
+        onError: (error) => {
+          addToast("error", "Failed to approve", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
     } else if (status === "REJECTED") {
-      addToast("info", "Task rejected", "The task has been sent back for revision.");
+      rejectTask({ taskId, roomId: tasks.find(t => t.id === taskId)?.roomId || "", rejectionNote: note }, {
+        onSuccess: () => {
+          setSelectedTask(null);
+          addToast("info", "Task rejected", "The task has been sent back for revision.");
+        },
+        onError: (error) => {
+          addToast("error", "Failed to reject", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
     }
   };
 
@@ -173,9 +166,6 @@ export default function Approvals() {
                         </div>
                         <span className="text-sm text-muted-foreground">
                           {task.assignee.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          • {MOCK_ROOMS.find((r) => r.id === task.roomId)?.name || "Unknown Room"}
                         </span>
                       </div>
                     )}
