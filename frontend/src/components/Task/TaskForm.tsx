@@ -1,6 +1,6 @@
 import * as React from "react";
-import { X } from "lucide-react";
-import { CreateTaskInput, User, UserRole } from "@/types";
+import { X, Plus, Trash2 } from "lucide-react";
+import { CreateTaskInput, User, UserRole, Task } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +13,13 @@ interface TaskFormProps {
   onSubmit: (data: CreateTaskInput) => void;
   members?: User[];
   isLoading?: boolean;
+  availableTasks?: Task[];
+  onAddDependency?: (dependsOnTaskId: string) => void;
+  onRemoveDependency?: (dependsOnTaskId: string) => void;
+  dependencies?: string[];
 }
 
-export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading }: TaskFormProps) {
+export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading, availableTasks = [], onAddDependency, onRemoveDependency, dependencies = [] }: TaskFormProps) {
   const [formData, setFormData] = React.useState<CreateTaskInput>({
     title: "",
     description: "",
@@ -24,11 +28,13 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading }:
     dueDate: "",
   });
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [selectedDependency, setSelectedDependency] = React.useState("");
 
   React.useEffect(() => {
     if (!isOpen) {
       setFormData({ title: "", description: "", requiredRole: "BACKEND", assigneeId: "", dueDate: "" });
       setErrors({});
+      setSelectedDependency("");
     }
   }, [isOpen]);
 
@@ -133,6 +139,64 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading }:
               value={formData.dueDate}
               onChange={(e) => setFormData((prev) => ({ ...prev, dueDate: e.target.value }))}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Dependencies</Label>
+            <div className="space-y-2">
+              {dependencies.length > 0 && (
+                <div className="space-y-2">
+                  {dependencies.map((depId) => {
+                    const depTask = availableTasks.find(t => t.id === depId);
+                    return (
+                      <div key={depId} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-secondary/50 border border-secondary">
+                        <span className="text-sm font-medium text-foreground truncate">
+                          {depTask?.title || `Task ${depId}`}
+                        </span>
+                        {onRemoveDependency && (
+                          <button
+                            type="button"
+                            onClick={() => onRemoveDependency(depId)}
+                            className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <select
+                  value={selectedDependency}
+                  onChange={(e) => setSelectedDependency(e.target.value)}
+                  className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Select task to depend on</option>
+                  {availableTasks
+                    .filter(t => !dependencies.includes(t.id))
+                    .map((task) => (
+                      <option key={task.id} value={task.id}>
+                        {task.title}
+                      </option>
+                    ))}
+                </select>
+                {onAddDependency && selectedDependency && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      onAddDependency(selectedDependency);
+                      setSelectedDependency("");
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Actions */}

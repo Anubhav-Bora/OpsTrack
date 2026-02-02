@@ -1,11 +1,11 @@
 import * as React from "react";
-import { X, Calendar, User as UserIcon, Clock, FileText, Link as LinkIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Task, User, TaskStatus, RoomMember } from "@/types";
+import { X, Calendar, User as UserIcon, Clock, FileText } from "lucide-react";
+import { Task, TaskStatus, RoomMember } from "@/types";
 import { Badge, getStatusVariant, getRoleVariant } from "@/components/Common/Badge";
 import { TASK_STATUS_LABELS, ROLE_LABELS } from "@/utils/constants";
 import { useAuth, isAdminOrLeaderInRoom } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { TaskDependencies } from "./TaskDependencies";
 
 interface TaskModalProps {
   task: Task;
@@ -13,17 +13,18 @@ interface TaskModalProps {
   onClose: () => void;
   onStatusChange?: (taskId: string, status: TaskStatus, note?: string) => void;
   onAssign?: (taskId: string, userId: string) => void;
-  roomMembers?: RoomMember[]; // Optional: pass room members for permission check
+  roomMembers?: RoomMember[];
+  allTasks?: Task[];
 }
 
-export function TaskModal({ task, isOpen, onClose, onStatusChange, roomMembers }: TaskModalProps) {
+export function TaskModal({ task, isOpen, onClose, onStatusChange, roomMembers, allTasks = [] }: TaskModalProps) {
   const { user } = useAuth();
   const [rejectionNote, setRejectionNote] = React.useState("");
   const [showRejectForm, setShowRejectForm] = React.useState(false);
 
   // Get room members from props
   const members = roomMembers || [];
-  
+
   // Check if user is admin/leader in this task's room
   const canApproveInRoom = user ? isAdminOrLeaderInRoom(user.id, members) : false;
 
@@ -125,25 +126,12 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, roomMembers }
             </div>
           )}
 
-          {/* Dependencies */}
-          {task.dependencies && task.dependencies.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                <LinkIcon className="h-4 w-4" />
-                Dependencies
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {task.dependencies.map((depId) => (
-                  <span
-                    key={depId}
-                    className="px-2 py-1 rounded-md bg-secondary text-sm text-muted-foreground"
-                  >
-                    Task #{depId}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Task Dependencies Component */}
+          <TaskDependencies
+            task={task}
+            availableTasks={allTasks}
+            isEditable={canApproveInRoom}
+          />
 
           {/* Rejection note */}
           {task.status === "REJECTED" && task.rejectionNote && (

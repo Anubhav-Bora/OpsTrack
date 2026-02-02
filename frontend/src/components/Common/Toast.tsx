@@ -59,9 +59,11 @@ function ToastContainer() {
   const { toasts, removeToast } = useToastNotification();
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none">
       {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
+        <div key={toast.id} className="pointer-events-auto">
+          <ToastItem toast={toast} onClose={() => removeToast(toast.id)} />
+        </div>
       ))}
     </div>
   );
@@ -75,17 +77,38 @@ const icons = {
 };
 
 const styles = {
-  success: "border-success/20 bg-success/5",
-  error: "border-destructive/20 bg-destructive/5",
-  warning: "border-warning/20 bg-warning/5",
-  info: "border-info/20 bg-info/5",
+  success: "bg-success border-success/80 text-white shadow-lg shadow-success/30",
+  error: "bg-destructive border-destructive/80 text-white shadow-lg shadow-destructive/30",
+  warning: "bg-warning border-warning/80 text-white shadow-lg shadow-warning/30",
+  info: "bg-info border-info/80 text-white shadow-lg shadow-info/30",
 };
 
 const iconStyles = {
-  success: "text-success",
-  error: "text-destructive",
-  warning: "text-warning",
-  info: "text-info",
+  success: "text-white",
+  error: "text-white",
+  warning: "text-white",
+  info: "text-white",
+};
+
+const textStyles = {
+  success: "text-white font-semibold",
+  error: "text-white font-semibold",
+  warning: "text-white font-semibold",
+  info: "text-white font-semibold",
+};
+
+const messageStyles = {
+  success: "text-white/95",
+  error: "text-white/95",
+  warning: "text-white/95",
+  info: "text-white/95",
+};
+
+const closeButtonStyles = {
+  success: "text-white/70 hover:text-white hover:bg-white/20",
+  error: "text-white/70 hover:text-white hover:bg-white/20",
+  warning: "text-white/70 hover:text-white hover:bg-white/20",
+  info: "text-white/70 hover:text-white hover:bg-white/20",
 };
 
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
@@ -94,20 +117,20 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-lg border p-4 shadow-elevated bg-card animate-slide-in min-w-[320px] max-w-md",
+        "flex items-start gap-3 rounded-lg border p-4 animate-slide-in min-w-[320px] max-w-md backdrop-blur-sm",
         styles[toast.type]
       )}
     >
       <Icon className={cn("h-5 w-5 flex-shrink-0 mt-0.5", iconStyles[toast.type])} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground">{toast.title}</p>
+        <p className={cn("text-sm", textStyles[toast.type])}>{toast.title}</p>
         {toast.message && (
-          <p className="mt-1 text-sm text-muted-foreground">{toast.message}</p>
+          <p className={cn("mt-1 text-sm leading-relaxed", messageStyles[toast.type])}>{toast.message}</p>
         )}
       </div>
       <button
         onClick={onClose}
-        className="flex-shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        className={cn("flex-shrink-0 rounded p-1 transition-colors", closeButtonStyles[toast.type])}
       >
         <X className="h-4 w-4" />
       </button>

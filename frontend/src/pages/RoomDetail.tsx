@@ -46,7 +46,7 @@ export default function RoomDetail() {
 
   // Get room-specific permissions
   const { isRoomAdminOrLeader, isRoomAdmin } = useRoomRole(members);
-  
+
   // Allow global admins or room admins to manage members
   const canManageMembers = user?.role === "ADMIN" || isRoomAdmin;
 
@@ -314,6 +314,8 @@ export default function RoomDetail() {
           isOpen={!!selectedTask}
           onClose={() => setSelectedTask(null)}
           onStatusChange={handleStatusChange}
+          roomMembers={members}
+          allTasks={tasks}
         />
       )}
 
@@ -324,6 +326,7 @@ export default function RoomDetail() {
         onSubmit={handleCreateTask}
         members={memberUsers}
         isLoading={isCreatingTask}
+        availableTasks={tasks}
       />
 
       {/* Add Member Modal */}
