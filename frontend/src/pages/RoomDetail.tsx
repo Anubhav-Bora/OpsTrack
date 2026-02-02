@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Users, ListTodo, BarChart3, Search, Filter, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Users, ListTodo, BarChart3, Search, Filter, Trash2, AlertTriangle, UserCheck } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
 import { TaskList } from "@/components/Task/TaskList";
@@ -9,6 +9,7 @@ import { TaskForm } from "@/components/Task/TaskForm";
 import { MembersList } from "@/components/Room/MembersList";
 import { AddMemberModal } from "@/components/Room/AddMemberModal";
 import { ConfirmDialog } from "@/components/Common/Modal";
+import { UserStatsModal } from "@/components/Common/UserStatsModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +20,7 @@ import { useCreateTask, useApproveTask, useRejectTask, useEditTask, useDeleteTas
 import { useUpdateMemberRole, useRemoveMember } from "@/hooks/useMemberManagement";
 import { useAddMember, useAllUsers } from "@/hooks/useAddMember";
 import { useDeleteRoom } from "@/hooks/useRooms";
+import { useRoomUsersWithStats } from "@/hooks/useUserStats";
 import { Room, Task, RoomMember, TaskStatus, CreateTaskInput } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
@@ -34,6 +36,7 @@ export default function RoomDetail() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUserStats, setShowUserStats] = useState(false);
 
   // Fetch data
   const { data: room, isLoading: roomLoading } = useRoomDetail(Number(roomId));
@@ -49,6 +52,9 @@ export default function RoomDetail() {
   const { mutate: updateMemberRole } = useUpdateMemberRole();
   const { mutate: removeMember } = useRemoveMember();
   const { mutate: addMember, isPending: isAddingMember } = useAddMember();
+  
+  // Fetch room users with stats (for leader/admin)
+  const { data: roomUsersWithStats = [], isLoading: isLoadingUserStats } = useRoomUsersWithStats(roomId);
 
   // Get room-specific permissions
   const { isRoomAdminOrLeader, isRoomAdmin } = useRoomRole(members);
@@ -220,6 +226,12 @@ export default function RoomDetail() {
         ]}
         actions={
           <div className="flex items-center gap-3">
+            {(isRoomAdminOrLeader || user?.role === "ADMIN") && (
+              <Button variant="outline" onClick={() => setShowUserStats(true)}>
+                <UserCheck className="h-4 w-4 mr-2" />
+                Member Stats
+              </Button>
+            )}
             {(isRoomAdminOrLeader || user?.role === "ADMIN") && (
               <Button onClick={() => setShowCreateTask(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -409,6 +421,18 @@ export default function RoomDetail() {
         variant="destructive"
         isLoading={isDeletingRoom}
       />
+
+      {/* User Stats Modal (for Leader/Admin) */}
+      {(isRoomAdminOrLeader || user?.role === "ADMIN") && (
+        <UserStatsModal
+          isOpen={showUserStats}
+          onClose={() => setShowUserStats(false)}
+          users={roomUsersWithStats}
+          isLoading={isLoadingUserStats}
+          title={`${room?.name} - Member Statistics`}
+          subtitle="View member task statistics for this room"
+        />
+      )}
     </Layout>
   );
 }

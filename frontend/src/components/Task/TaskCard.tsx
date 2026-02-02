@@ -1,4 +1,4 @@
-import { Calendar, MoreHorizontal, Clock, AlertCircle, ChevronRight } from "lucide-react";
+import { Calendar, MoreHorizontal, Clock, AlertCircle, ChevronRight, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task } from "@/types";
 import { Badge, getStatusVariant } from "@/components/Common/Badge";
@@ -98,6 +98,12 @@ export function TaskCard({ task, onClick, onMenuClick, className }: TaskCardProp
               </span>
             </div>
           )}
+          {task.status === "REJECTED" && task.rejectionNote && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-destructive/10 text-destructive">
+              <MessageCircle className="h-3.5 w-3.5" />
+              <span className="font-medium text-xs">Has rejection note</span>
+            </div>
+          )}
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 smooth-transition" />
       </div>
@@ -112,7 +118,8 @@ export function TaskCardCompact({ task, onClick }: TaskCardProps) {
       className={cn(
         "group flex items-center justify-between gap-4 rounded-xl border bg-card p-4",
         "transition-all duration-200 cursor-pointer smooth-transition",
-        "hover:shadow-elevated hover:border-primary/20 hover:-translate-y-0.5"
+        "hover:shadow-elevated hover:border-primary/20 hover:-translate-y-0.5",
+        task.status === "REJECTED" && "border-destructive/30 bg-destructive/5"
       )}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -128,9 +135,14 @@ export function TaskCardCompact({ task, onClick }: TaskCardProps) {
           )}
         </div>
       </div>
-      <Badge variant={getStatusVariant(task.status)} size="sm">
-        {TASK_STATUS_LABELS[task.status]}
-      </Badge>
+      <div className="flex items-center gap-2">
+        {task.status === "REJECTED" && task.rejectionNote && (
+          <MessageCircle className="h-4 w-4 text-destructive" title="Has rejection note" />
+        )}
+        <Badge variant={getStatusVariant(task.status)} size="sm">
+          {TASK_STATUS_LABELS[task.status]}
+        </Badge>
+      </div>
     </div>
   );
 }

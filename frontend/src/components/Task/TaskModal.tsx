@@ -7,6 +7,7 @@ import { useAuth, isAdminOrLeaderInRoom } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { TaskDependencies } from "./TaskDependencies";
 import { EditTaskModal } from "./EditTaskModal";
+import { RejectionDialog } from "./RejectionDialog";
 
 interface TaskModalProps {
   task: Task;
@@ -23,8 +24,7 @@ interface TaskModalProps {
 
 export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDelete, roomMembers, allTasks = [], canEdit: canEditProp = false }: TaskModalProps) {
   const { user } = useAuth();
-  const [rejectionNote, setRejectionNote] = React.useState("");
-  const [showRejectForm, setShowRejectForm] = React.useState(false);
+  const [showRejectionDialog, setShowRejectionDialog] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
@@ -60,11 +60,10 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
   const canApprove = canApproveInRoom && task.status === "SUBMITTED";
   const canStartProgress = isAssignedToMe && task.status === "PENDING";
 
-  const handleReject = () => {
-    if (onStatusChange && rejectionNote.trim()) {
-      onStatusChange(task.id, "REJECTED", rejectionNote);
-      setShowRejectForm(false);
-      setRejectionNote("");
+  const handleReject = (rejectionNote: string) => {
+    if (onStatusChange) {
+      onStatusChange(task.id, "REJECTED", rejectionNote || undefined);
+      setShowRejectionDialog(false);
     }
   };
 
@@ -76,12 +75,12 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl mx-4 rounded-xl bg-card border shadow-elevated animate-scale-in max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-2xl mx-4 rounded-xl bg-card border shadow-elevated animate-scale-in max-h-[90vh] overflow-hidden flex flex-col pointer-events-auto">
         {/* Header */}
         <div className="flex items-start justify-between border-b p-6">
           <div className="flex-1 min-w-0 pr-4">
@@ -167,31 +166,6 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
             </div>
           )}
 
-          {/* Reject form */}
-          {showRejectForm && (
-            <div className="rounded-lg border p-4 space-y-3">
-              <h3 className="text-sm font-medium text-foreground">Rejection Note</h3>
-              <textarea
-                value={rejectionNote}
-                onChange={(e) => setRejectionNote(e.target.value)}
-                placeholder="Please provide a reason for rejection..."
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring min-h-[100px]"
-              />
-              <div className="flex justify-end gap-2">
-                <Button variant="ghost" onClick={() => setShowRejectForm(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleReject}
-                  disabled={!rejectionNote.trim()}
-                >
-                  Confirm Rejection
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Timeline */}
           <div>
             <h3 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
@@ -235,34 +209,36 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
             )}
           </div>
           <div className="flex justify-end gap-3">
-            {canStartProgress && (
+            {canStartProgress && onStatusChange && (
               <Button
                 variant="outline"
-                onClick={() => onStatusChange(task.id, "IN_PROGRESS")}
+                onClick={() => onStatusChange?.(task.id, "IN_PROGRESS")}
               >
                 Start Progress
               </Button>
             )}
-            {canSubmit && (
-              <Button onClick={() => onStatusChange(task.id, "SUBMITTED")}>
+            {canSubmit && onStatusChange && (
+              <Button onClick={() => onStatusChange?.(task.id, "SUBMITTED")}>
                 Submit for Approval
               </Button>
             )}
-            {canApprove && !showRejectForm && (
+            {canApprove && (
               <>
                 <Button
                   variant="outline"
                   className="text-destructive hover:text-destructive"
-                  onClick={() => setShowRejectForm(true)}
+                  onClick={() => setShowRejectionDialog(true)}
                 >
                   Reject
                 </Button>
-                <Button
-                  className="bg-success hover:bg-success/90"
-                  onClick={() => onStatusChange(task.id, "APPROVED")}
-                >
-                  Approve
-                </Button>
+                {onStatusChange && (
+                  <Button
+                    className="bg-success hover:bg-success/90"
+                    onClick={() => onStatusChange?.(task.id, "APPROVED")}
+                  >
+                    Approve
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -278,26 +254,42 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
         roomMembers={members}
       />
 
+      {/* Rejection Dialog */}
+      <RejectionDialog
+        isOpen={showRejectionDialog}
+        onClose={() => setShowRejectionDialog(false)}
+        onConfirm={handleReject}
+        taskTitle={task.title}
+      />
+
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
-          <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
-          <div className="relative bg-card rounded-lg border p-6 shadow-elevated max-w-sm mx-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm pointer-events-auto" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative bg-card rounded-lg border p-6 shadow-elevated max-w-sm mx-4 pointer-events-auto">
             <h3 className="text-lg font-semibold text-foreground mb-2">Delete Task</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Are you sure you want to delete "{task.title}"? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <Button
+                type="button"
                 variant="outline"
-                onClick={() => setShowDeleteConfirm(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowDeleteConfirm(false);
+                }}
               >
                 Cancel
               </Button>
               <Button
+                type="button"
                 className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                onClick={() => {
-                  onDelete(task.id);
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete?.(task.id);
                   setShowDeleteConfirm(false);
                 }}
               >

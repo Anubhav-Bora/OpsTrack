@@ -3,6 +3,7 @@ import { CheckCircle, XCircle, Clock, Search } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
 import { TaskModal } from "@/components/Task/TaskModal";
+import { RejectionDialog } from "@/components/Task/RejectionDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge, getStatusVariant } from "@/components/Common/Badge";
@@ -16,6 +17,7 @@ export default function Approvals() {
   const { addToast } = useToastNotification();
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [taskToReject, setTaskToReject] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Load submitted tasks
@@ -62,7 +64,21 @@ export default function Approvals() {
   };
 
   const handleQuickReject = (task: Task) => {
-    setSelectedTask(task);
+    setTaskToReject(task);
+  };
+
+  const handleRejectConfirm = (note: string) => {
+    if (taskToReject) {
+      rejectTask({ taskId: taskToReject.id, roomId: taskToReject.roomId || "", rejectionNote: note || undefined }, {
+        onSuccess: () => {
+          setTaskToReject(null);
+          addToast("info", "Task rejected", "The task has been sent back for revision.");
+        },
+        onError: (error) => {
+          addToast("error", "Failed to reject", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
+    }
   };
 
   return (
@@ -196,15 +212,24 @@ export default function Approvals() {
         )}
       </div>
 
-      {/* Task Modal for rejection with note */}
+      {/* Task Modal for viewing details */}
       {selectedTask && (
         <TaskModal
           task={selectedTask}
           isOpen={!!selectedTask}
           onClose={() => setSelectedTask(null)}
           onStatusChange={handleStatusChange}
+          canEdit={true}
         />
       )}
+
+      {/* Rejection Dialog */}
+      <RejectionDialog
+        isOpen={!!taskToReject}
+        onClose={() => setTaskToReject(null)}
+        onConfirm={handleRejectConfirm}
+        taskTitle={taskToReject?.title || ""}
+      />
     </Layout>
   );
 }

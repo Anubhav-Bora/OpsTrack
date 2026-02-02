@@ -104,3 +104,27 @@ export interface SignupInput {
   password: string;
   role: UserRole;
 }
+
+export interface UserStats {
+  totalTasks: number;
+  pendingTasks: number;
+  inProgressTasks: number;
+  submittedTasks: number;
+  completedTasks: number;
+  rejectedTasks: number;
+}
+
+export interface UserWithStats {
+  id: string;
+  name: string;
+  email: string | null;
+  role: UserRole;
+  roomRole?: RoomRole;
+  createdAt: string;
+  stats: UserStats;
+  rooms?: {
+    id: string;
+    name: string;
+    role: RoomRole;
+  }[];
+}
