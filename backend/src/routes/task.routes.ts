@@ -15,6 +15,7 @@ router.post('/', authMiddleware, taskController.createTask);
 
 // ID-based routes (after specific routes)
 router.get('/:id', authMiddleware, taskController.getTaskById);
+router.put('/:id', authMiddleware, taskController.updateTask);
 router.put('/:id/status', authMiddleware, taskController.updateTaskStatus);
 router.put('/:id/assign', authMiddleware, taskController.assignTask);
 router.put('/:id/submit', authMiddleware, taskController.completeTask);

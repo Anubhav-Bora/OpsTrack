@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Badge, getRoleVariant } from "@/components/Common/Badge";
 import { ROLE_LABELS } from "@/utils/constants";
+import { useSubmittedTasks } from "@/hooks/useApprovals";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -33,6 +34,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { data: submittedTasks = [] } = useSubmittedTasks();
 
   const hasApprovalAccess = React.useMemo(() => {
     if (!user) return false;
@@ -87,6 +89,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <nav className="flex-1 space-y-1.5 p-3">
           {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const pendingCount = item.path === "/approvals" ? submittedTasks.length : 0;
             return (
               <NavLink
                 key={item.path}
@@ -100,14 +103,28 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 )}
               >
                 <div className={cn(
-                  "rounded-lg p-1.5 transition-all duration-200",
+                  "relative rounded-lg p-1.5 transition-all duration-200",
                   isActive
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "bg-sidebar-accent text-sidebar-muted group-hover:bg-sidebar-primary/20 group-hover:text-sidebar-foreground"
                 )}>
                   <item.icon className="h-4 w-4" />
+                  {pendingCount > 0 && (
+                    <div className="absolute -top-2 -right-2 bg-destructive text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {pendingCount > 9 ? "9+" : pendingCount}
+                    </div>
+                  )}
                 </div>
-                {!isCollapsed && <span>{item.label}</span>}
+                {!isCollapsed && (
+                  <div className="flex items-center justify-between flex-1">
+                    <span>{item.label}</span>
+                    {pendingCount > 0 && (
+                      <Badge className="bg-destructive text-white text-xs">
+                        {pendingCount}
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </NavLink>
             );
           })}

@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/Common/EmptyState";
 import { useRooms, useCreateRoom } from "@/hooks/useRooms";
 import { CreateRoomInput } from "@/types";
 import { useAppSelector } from "@/store/hooks";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
@@ -18,8 +19,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [showCreateRoom, setShowCreateRoom] = useState(false);
 
-  // Get user and auth state from Redux
-  const user = useAppSelector((state) => state.auth.user);
+  // Get user from AuthContext (which is synced with localStorage)
+  const authContext = useAuth();
+  const user = authContext.user;
   const isAdminOrLeader = user?.role === "ADMIN";
 
   // Fetch rooms with polling

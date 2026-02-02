@@ -43,9 +43,24 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading, a
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
     }
+    if (!formData.requiredRole) {
+      newErrors.requiredRole = "Required role is required";
+    }
+    if (!formData.assigneeId) {
+      newErrors.assigneeId = "Assignee is required";
+    }
+    if (!formData.dueDate) {
+      newErrors.dueDate = "Due date is required";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  // Filter members by required role
+  const filteredMembers = React.useMemo(() => {
+    if (!formData.requiredRole) return members;
+    return members.filter(member => member.role === formData.requiredRole);
+  }, [members, formData.requiredRole]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,12 +114,12 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading, a
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="requiredRole">Required Role</Label>
+            <Label htmlFor="requiredRole">Required Role *</Label>
             <select
               id="requiredRole"
               value={formData.requiredRole || "BACKEND"}
-              onChange={(e) => setFormData((prev) => ({ ...prev, requiredRole: e.target.value }))}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              onChange={(e) => setFormData((prev) => ({ ...prev, requiredRole: e.target.value, assigneeId: "" }))}
+              className={`w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${errors.requiredRole ? "border-destructive" : ""}`}
             >
               <option value="BACKEND">Backend</option>
               <option value="FRONTEND">Frontend</option>
@@ -112,33 +127,46 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading, a
               <option value="CYBERSECURITY">Cybersecurity</option>
               <option value="ADMIN">Admin</option>
             </select>
+            {errors.requiredRole && (
+              <p className="text-sm text-destructive">{errors.requiredRole}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="assignee">Assignee</Label>
+            <Label htmlFor="assignee">Assignee *</Label>
             <select
               id="assignee"
               value={formData.assigneeId}
               onChange={(e) => setFormData((prev) => ({ ...prev, assigneeId: e.target.value }))}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className={`w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${errors.assigneeId ? "border-destructive" : ""}`}
             >
               <option value="">Select assignee</option>
-              {members.map((member) => (
+              {filteredMembers.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.name}
                 </option>
               ))}
             </select>
+            {filteredMembers.length === 0 && formData.requiredRole && (
+              <p className="text-sm text-muted-foreground">No team members with {formData.requiredRole} role available</p>
+            )}
+            {errors.assigneeId && (
+              <p className="text-sm text-destructive">{errors.assigneeId}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dueDate">Due Date</Label>
+            <Label htmlFor="dueDate">Due Date *</Label>
             <Input
               id="dueDate"
               type="date"
               value={formData.dueDate}
               onChange={(e) => setFormData((prev) => ({ ...prev, dueDate: e.target.value }))}
+              className={errors.dueDate ? "border-destructive" : ""}
             />
+            {errors.dueDate && (
+              <p className="text-sm text-destructive">{errors.dueDate}</p>
+            )}
           </div>
 
           <div className="space-y-2">

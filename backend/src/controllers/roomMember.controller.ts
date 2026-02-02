@@ -36,7 +36,7 @@ export const roomMemberController = {
     addMemberToRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { userId, roomId, role } = req.body;
-            const canPromote = await authorizationService.canPromoteMembers(req.userId!, Number(roomId));
+            const canPromote = await authorizationService.canPromoteMembers(Number(req.userId!), Number(roomId));
             if (!canPromote) {
                 return res.status(403).json({ error: 'You do not have permission to add members' });
             }
@@ -51,7 +51,7 @@ export const roomMemberController = {
         try {
             const { userId, roomId } = req.params;
             const { role } = req.body;
-            const canPromote = await authorizationService.canPromoteMembers(req.userId!, Number(roomId));
+            const canPromote = await authorizationService.canPromoteMembers(Number(req.userId!), Number(roomId));
             if (!canPromote) {
                 return res.status(403).json({ error: 'You do not have permission to update member roles' });
             }
@@ -65,7 +65,7 @@ export const roomMemberController = {
     removeMemberFromRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { userId, roomId } = req.params;
-            const canPromote = await authorizationService.canPromoteMembers(req.userId!, Number(roomId));
+            const canPromote = await authorizationService.canPromoteMembers(Number(req.userId!), Number(roomId));
             if (!canPromote) {
                 return res.status(403).json({ error: 'You do not have permission to remove members' });
             }

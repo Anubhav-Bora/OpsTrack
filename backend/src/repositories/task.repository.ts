@@ -3,9 +3,10 @@ import { TaskStatus, UserRole } from '@prisma/client'
 
 export const taskRepo = {
     //create new task
-    createTask: (title: string, description: string | undefined, requiredRole: UserRole, roomId: number, dueDate?: Date) =>
+    createTask: (title: string, description: string | undefined, requiredRole: UserRole, roomId: number, dueDate?: Date, assignedTo?: number) =>
         prisma.task.create({
-            data: { title, description, requiredRole, roomId, dueDate },
+            data: { title, description, requiredRole, roomId, dueDate, assignedTo },
+            include: { assignee: true, room: true },
         }),
 
     //get all tasks
@@ -28,12 +29,26 @@ export const taskRepo = {
             data: { status },
         }),
 
-    //assign task to user
-    assignTask: (id: number, assignedTo: number) =>
+    //update task details
+    updateTask: (id: number, title: string, description: string | undefined, requiredRole: UserRole, dueDate?: Date) =>
         prisma.task.update({
             where: { id },
-            data: { assignedTo },
+            data: { title, description, requiredRole, dueDate },
+            include: { assignee: true, dependencies: true, dependents: true, room: true },
         }),
+
+    //assign task to user
+    assignTask: (id: number, assignedTo: number) => {
+        console.log(`[Task Repository] assignTask - taskId: ${id}, assignedTo: ${assignedTo}`);
+        return prisma.task.update({
+            where: { id },
+            data: { assignedTo },
+            include: { assignee: true, room: true, dependencies: true, dependents: true },
+        }).then(task => {
+            console.log(`[Task Repository] Task updated:`, { id: task.id, assignedTo: task.assignedTo });
+            return task;
+        });
+    },
 
     //submit task for approval
     submitTask: (id: number, submittedBy: number) =>
@@ -100,9 +115,11 @@ export const taskRepo = {
         }),
 
     //get tasks assigned to user
-    getTasksByAssignee: (userId: number) =>
-        prisma.task.findMany({
+    getTasksByAssignee: (userId: number) => {
+        console.log(`[Task Repository] getTasksByAssignee - userId: ${userId}, type: ${typeof userId}`);
+        return prisma.task.findMany({
             where: { assignedTo: userId },
-            include: { room: true, dependencies: true },
-        }),
+            include: { room: true, assignee: true, dependencies: true, dependents: true },
+        });
+    },
 }

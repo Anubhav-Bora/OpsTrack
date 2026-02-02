@@ -1,6 +1,8 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
+import * as React from 'react';
 import { get, post, del } from '@/utils/api';
 import { queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface TaskDependency {
     id: string;
@@ -11,7 +13,9 @@ export interface TaskDependency {
 }
 
 export function useTaskDependencies(taskId: string) {
-    return useQuery({
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+    const query = useQuery({
         queryKey: ['task-dependencies', taskId],
         queryFn: async () => {
             const data = await get<any[]>(`/task-dependencies/task/${taskId}`);
@@ -22,12 +26,22 @@ export function useTaskDependencies(taskId: string) {
                 dependsOnTaskId: String(dep.dependsOnTaskId),
             })) as TaskDependency[];
         },
-        enabled: !!taskId,
+        enabled: !!taskId && isAuthenticated && !authLoading,
     });
+
+    React.useEffect(() => {
+        if (!!taskId && isAuthenticated && !authLoading) {
+            query.refetch();
+        }
+    }, [isAuthenticated, authLoading, taskId, query]);
+
+    return query;
 }
 
 export function useTaskDependents(taskId: string) {
-    return useQuery({
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+    const query = useQuery({
         queryKey: ['task-dependents', taskId],
         queryFn: async () => {
             const data = await get<any[]>(`/task-dependencies/dependents/${taskId}`);
@@ -38,8 +52,16 @@ export function useTaskDependents(taskId: string) {
                 dependsOnTaskId: String(dep.dependsOnTaskId),
             })) as TaskDependency[];
         },
-        enabled: !!taskId,
+        enabled: !!taskId && isAuthenticated && !authLoading,
     });
+
+    React.useEffect(() => {
+        if (!!taskId && isAuthenticated && !authLoading) {
+            query.refetch();
+        }
+    }, [isAuthenticated, authLoading, taskId, query]);
+
+    return query;
 }
 
 export function useAddTaskDependency() {

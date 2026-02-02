@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Boxes, Eye, EyeOff, ArrowRight, Sparkles, Shield, Users, Zap } from "lucide-react";
+import { Mail, Lock, Boxes, Eye, EyeOff, ArrowRight, Shield, Users, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -175,11 +175,6 @@ export default function Login() {
 
         <div className="relative z-10 flex flex-col items-center justify-center p-12 text-center">
           <div className="max-w-lg space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm text-sidebar-foreground/80">
-              <Sparkles className="h-4 w-4 text-warning" />
-              Trusted by 10,000+ teams
-            </div>
-
             <h2 className="text-4xl font-bold text-sidebar-foreground leading-tight">
               Manage your workspace{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">

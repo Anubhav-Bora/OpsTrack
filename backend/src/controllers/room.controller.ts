@@ -5,9 +5,11 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 export const roomController = {
     getAllRooms: async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.userId!;
+            const userId = Number(req.userId!);
             const userRole = req.userRole!;
+            console.log('[Room Controller] getAllRooms - userId:', userId, 'email:', req.email, 'userRole:', userRole);
             const rooms = await roomService.getAllRooms(userId, userRole);
+            console.log('[Room Controller] Rooms found:', rooms.length);
             const transformedRooms = rooms.map(room => ({
                 ...room,
                 membersCount: room._count.members,
@@ -37,7 +39,7 @@ export const roomController = {
     createRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { name, description } = req.body;
-            const room = await roomService.createRoom(name, description, req.userId!);
+            const room = await roomService.createRoom(name, description, Number(req.userId!));
             res.status(201).json(room);
         } catch (error) {
             res.status(400).json({ error: 'Failed to create room' });
@@ -58,10 +60,26 @@ export const roomController = {
     deleteRoom: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
-            await roomService.deleteRoom(Number(id));
+            const userId = Number(req.userId!);
+            const userRole = req.userRole!;
+
+            // Check if user is admin or room leader
+            const canDelete = await roomService.canDeleteRoom(Number(id), userId, userRole);
+            if (!canDelete) {
+                return res.status(403).json({ error: 'You do not have permission to delete this room' });
+            }
+
+            const roomId = Number(id);
+            console.log(`Attempting to delete room ${roomId}`);
+            
+            await roomService.deleteRoom(roomId);
+            console.log(`Successfully deleted room ${roomId}`);
             res.json({ message: 'Room deleted' });
         } catch (error) {
-            res.status(400).json({ error: 'Failed to delete room' });
+            console.error('Delete room error:', error);
+            const message = error instanceof Error ? error.message : 'Failed to delete room';
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            res.status(400).json({ error: message });
         }
     },
 };

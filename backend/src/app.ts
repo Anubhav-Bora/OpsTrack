@@ -11,11 +11,21 @@ import { errorMiddleware } from './middlewares/error.middleware';
 const app = express();
 
 // Middleware
-
 app.use(express.json());
-app.use(cors());
+
+// CORS configuration
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Routes
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'OK', message: 'Backend is running' });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);

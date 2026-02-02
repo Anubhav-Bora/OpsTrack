@@ -27,14 +27,14 @@ export const taskController = {
 
     createTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { title, description, requiredRole = 'BACKEND', roomId, dueDate } = req.body;
+            const { title, description, requiredRole = 'BACKEND', roomId, dueDate, assigneeId } = req.body;
             if (!title) {
                 return res.status(400).json({ error: 'Title is required' });
             }
             if (!roomId) {
                 return res.status(400).json({ error: 'Room ID is required' });
             }
-            const task = await taskService.createTask(title, description, requiredRole, roomId, dueDate, req.userId!);
+            const task = await taskService.createTask(title, description, requiredRole, roomId, dueDate, Number(req.userId!), assigneeId);
             res.status(201).json(task);
         } catch (error: any) {
             res.status(400).json({ error: error.message });
@@ -52,13 +52,27 @@ export const taskController = {
         }
     },
 
+    updateTask: async (req: AuthRequest, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { title, description, requiredRole, dueDate, roomId } = req.body;
+            const task = await taskService.updateTask(Number(id), title, description, requiredRole, dueDate, Number(req.userId!), roomId);
+            res.json(task);
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
+        }
+    },
+
     assignTask: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
             const { assignedTo, roomId } = req.body;
-            const task = await taskService.assignTask(Number(id), assignedTo, req.userId!, roomId);
+            console.log(`[Task Controller] assignTask - taskId: ${id}, assignedTo: ${assignedTo}, roomId: ${roomId}, requestedBy: ${req.userId}`);
+            const task = await taskService.assignTask(Number(id), assignedTo, Number(req.userId!), roomId);
+            console.log(`[Task Controller] Task assigned successfully:`, { taskId: task.id, assignedTo: task.assignedTo, title: task.title });
             res.json(task);
         } catch (error: any) {
+            console.error(`[Task Controller] assignTask error:`, error.message);
             res.status(400).json({ error: error.message });
         }
     },
@@ -66,7 +80,7 @@ export const taskController = {
     completeTask: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
-            const task = await taskService.submitTask(Number(id), req.userId!);
+            const task = await taskService.submitTask(Number(id), Number(req.userId!));
             res.json(task);
         } catch (error: any) {
             res.status(400).json({ error: error.message });
@@ -77,7 +91,7 @@ export const taskController = {
         try {
             const { id } = req.params;
             const { roomId } = req.body;
-            const task = await taskService.approveTask(Number(id), req.userId!, roomId);
+            const task = await taskService.approveTask(Number(id), Number(req.userId!), roomId);
             res.json(task);
         } catch (error: any) {
             res.status(400).json({ error: error.message });
@@ -88,7 +102,7 @@ export const taskController = {
         try {
             const { id } = req.params;
             const { roomId, rejectionNote } = req.body;
-            const task = await taskService.rejectTask(Number(id), req.userId!, roomId, rejectionNote);
+            const task = await taskService.rejectTask(Number(id), Number(req.userId!), roomId, rejectionNote);
             res.json(task);
         } catch (error: any) {
             res.status(400).json({ error: error.message });
@@ -98,10 +112,11 @@ export const taskController = {
     deleteTask: async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
-            await taskService.deleteTask(Number(id));
+            const { roomId } = req.body;
+            await taskService.deleteTask(Number(id), Number(req.userId!), roomId ? Number(roomId) : undefined);
             res.json({ message: 'Task deleted' });
-        } catch (error) {
-            res.status(400).json({ error: 'Failed to delete task' });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
         }
     },
 
@@ -127,9 +142,16 @@ export const taskController = {
 
     getTasksByAssignee: async (req: AuthRequest, res: Response) => {
         try {
-            const tasks = await taskService.getTasksByAssignee(req.userId!);
+            const userId = Number(req.userId!);
+            console.log(`[Task Controller] Fetching tasks for user ${userId}`);
+            const tasks = await taskService.getTasksByAssignee(userId);
+            console.log(`[Task Controller] Found ${tasks.length} tasks for user ${userId}`);
+            if (tasks.length > 0) {
+                console.log(`[Task Controller] Task details:`, tasks.map(t => ({ id: t.id, title: t.title, assignedTo: t.assignedTo })));
+            }
             res.json(tasks);
         } catch (error) {
+            console.error('Get tasks by assignee error:', error);
             res.status(500).json({ error: 'Failed to fetch tasks' });
         }
     },

@@ -1,11 +1,12 @@
 import * as React from "react";
-import { X, Calendar, User as UserIcon, Clock, FileText } from "lucide-react";
+import { X, Calendar, User as UserIcon, Clock, FileText, Edit2 } from "lucide-react";
 import { Task, TaskStatus, RoomMember } from "@/types";
 import { Badge, getStatusVariant, getRoleVariant } from "@/components/Common/Badge";
 import { TASK_STATUS_LABELS, ROLE_LABELS } from "@/utils/constants";
 import { useAuth, isAdminOrLeaderInRoom } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { TaskDependencies } from "./TaskDependencies";
+import { EditTaskModal } from "./EditTaskModal";
 
 interface TaskModalProps {
   task: Task;
@@ -13,20 +14,27 @@ interface TaskModalProps {
   onClose: () => void;
   onStatusChange?: (taskId: string, status: TaskStatus, note?: string) => void;
   onAssign?: (taskId: string, userId: string) => void;
+  onEdit?: (taskId: string, title: string, description?: string, requiredRole?: string, dueDate?: string, assigneeId?: string) => void;
+  onDelete?: (taskId: string) => void;
   roomMembers?: RoomMember[];
   allTasks?: Task[];
+  canEdit?: boolean;
 }
 
-export function TaskModal({ task, isOpen, onClose, onStatusChange, roomMembers, allTasks = [] }: TaskModalProps) {
+export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDelete, roomMembers, allTasks = [], canEdit: canEditProp = false }: TaskModalProps) {
   const { user } = useAuth();
   const [rejectionNote, setRejectionNote] = React.useState("");
   const [showRejectForm, setShowRejectForm] = React.useState(false);
+  const [showEditModal, setShowEditModal] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   // Get room members from props
   const members = roomMembers || [];
 
-  // Check if user is admin/leader in this task's room
+  // Check if user is admin/leader in this task's room (fallback calculation)
   const canApproveInRoom = user ? isAdminOrLeaderInRoom(user.id, members) : false;
+  // Use passed prop if available, otherwise calculate from members
+  const canEdit = canEditProp || canApproveInRoom;
 
   // Handle escape key
   React.useEffect(() => {
@@ -60,6 +68,13 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, roomMembers, 
     }
   };
 
+  const handleEditSave = (title: string, description?: string, requiredRole?: string, dueDate?: string, assigneeId?: string) => {
+    if (onEdit) {
+      onEdit(task.id, title, description, requiredRole, dueDate, assigneeId);
+      setShowEditModal(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
@@ -83,12 +98,23 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, roomMembers, 
             </div>
             <h2 className="text-xl font-semibold text-foreground">{task.title}</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                title="Edit task"
+              >
+                <Edit2 className="h-5 w-5" />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -196,43 +222,91 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, roomMembers, 
         </div>
 
         {/* Actions */}
-        {onStatusChange && (
-          <div className="border-t p-4 bg-secondary/30">
-            <div className="flex justify-end gap-3">
-              {canStartProgress && (
+        <div className="border-t p-4 bg-secondary/30 flex justify-between items-center gap-3">
+          <div>
+            {canEdit && onDelete && (
+              <Button
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                Delete Task
+              </Button>
+            )}
+          </div>
+          <div className="flex justify-end gap-3">
+            {canStartProgress && (
+              <Button
+                variant="outline"
+                onClick={() => onStatusChange(task.id, "IN_PROGRESS")}
+              >
+                Start Progress
+              </Button>
+            )}
+            {canSubmit && (
+              <Button onClick={() => onStatusChange(task.id, "SUBMITTED")}>
+                Submit for Approval
+              </Button>
+            )}
+            {canApprove && !showRejectForm && (
+              <>
                 <Button
                   variant="outline"
-                  onClick={() => onStatusChange(task.id, "IN_PROGRESS")}
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setShowRejectForm(true)}
                 >
-                  Start Progress
+                  Reject
                 </Button>
-              )}
-              {canSubmit && (
-                <Button onClick={() => onStatusChange(task.id, "SUBMITTED")}>
-                  Submit for Approval
+                <Button
+                  className="bg-success hover:bg-success/90"
+                  onClick={() => onStatusChange(task.id, "APPROVED")}
+                >
+                  Approve
                 </Button>
-              )}
-              {canApprove && !showRejectForm && (
-                <>
-                  <Button
-                    variant="outline"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setShowRejectForm(true)}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    className="bg-success hover:bg-success/90"
-                    onClick={() => onStatusChange(task.id, "APPROVED")}
-                  >
-                    Approve
-                  </Button>
-                </>
-              )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Edit Task Modal */}
+      <EditTaskModal
+        task={task}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleEditSave}
+        roomMembers={members}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative bg-card rounded-lg border p-6 shadow-elevated max-w-sm mx-4">
+            <h3 className="text-lg font-semibold text-foreground mb-2">Delete Task</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Are you sure you want to delete "{task.title}"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                onClick={() => {
+                  onDelete(task.id);
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                Delete
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

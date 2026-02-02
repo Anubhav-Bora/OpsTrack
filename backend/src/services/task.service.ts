@@ -11,24 +11,36 @@ export const taskService = {
         return await taskRepo.getTaskbyId(id);
     },
 
-    createTask: async (title: string, description: string | undefined, requiredRole: UserRole, roomId: number, dueDate: string | undefined, userId: number) => {
+    createTask: async (title: string, description: string | undefined, requiredRole: UserRole, roomId: number, dueDate: string | undefined, userId: number, assigneeId?: number) => {
         const canAssign = await authorizationService.canAssignTasks(userId, roomId);
         if (!canAssign) {
             throw new Error('You do not have permission to create tasks in this room');
         }
-        return await taskRepo.createTask(title, description, requiredRole, roomId, dueDate ? new Date(dueDate) : undefined);
+        return await taskRepo.createTask(title, description, requiredRole, roomId, dueDate ? new Date(dueDate) : undefined, assigneeId);
     },
 
     updateTaskStatus: async (id: number, status: TaskStatus) => {
         return await taskRepo.updateTaskStatus(id, status);
     },
 
-    assignTask: async (id: number, assignedTo: number, userId: number, roomId: number) => {
+    updateTask: async (id: number, title: string, description: string | undefined, requiredRole: UserRole, dueDate: string | undefined, userId: number, roomId: number) => {
         const canAssign = await authorizationService.canAssignTasks(userId, roomId);
+        if (!canAssign) {
+            throw new Error('You do not have permission to edit tasks in this room');
+        }
+        return await taskRepo.updateTask(id, title, description, requiredRole, dueDate ? new Date(dueDate) : undefined);
+    },
+
+    assignTask: async (id: number, assignedTo: number, userId: number, roomId: number) => {
+        console.log(`[Task Service] assignTask - taskId: ${id}, assignedTo: ${assignedTo}, userId: ${userId}, roomId: ${roomId}`);
+        const canAssign = await authorizationService.canAssignTasks(userId, roomId);
+        console.log(`[Task Service] Can assign tasks: ${canAssign}`);
         if (!canAssign) {
             throw new Error('You do not have permission to assign tasks');
         }
-        return await taskRepo.assignTask(id, assignedTo);
+        const result = await taskRepo.assignTask(id, assignedTo);
+        console.log(`[Task Service] Task assigned:`, { id: result.id, assignedTo: result.assignedTo });
+        return result;
     },
 
     submitTask: async (id: number, userId: number) => {
@@ -50,7 +62,24 @@ export const taskService = {
         return await taskRepo.rejectTask(id, rejectionNote);
     },
 
-    deleteTask: async (id: number) => {
+    deleteTask: async (id: number, userId: number, roomId?: number) => {
+        // If roomId is provided, check authorization
+        if (roomId) {
+            const canDelete = await authorizationService.canAssignTasks(userId, roomId);
+            if (!canDelete) {
+                throw new Error('You do not have permission to delete tasks');
+            }
+        } else {
+            // If roomId is not provided, fetch the task to get its roomId and check authorization
+            const task = await taskRepo.getTaskbyId(id);
+            if (!task) {
+                throw new Error('Task not found');
+            }
+            const canDelete = await authorizationService.canAssignTasks(userId, task.roomId);
+            if (!canDelete) {
+                throw new Error('You do not have permission to delete tasks');
+            }
+        }
         return await taskRepo.deleteTask(id);
     },
 
@@ -63,6 +92,9 @@ export const taskService = {
     },
 
     getTasksByAssignee: async (userId: number) => {
-        return await taskRepo.getTasksByAssignee(userId);
+        console.log(`[Task Service] getTasksByAssignee for userId: ${userId}, type: ${typeof userId}`);
+        const tasks = await taskRepo.getTasksByAssignee(userId);
+        console.log(`[Task Service] Found ${tasks.length} tasks`);
+        return tasks;
     },
 };

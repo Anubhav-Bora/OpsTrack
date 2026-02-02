@@ -1,10 +1,14 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
+import * as React from 'react';
 import { get, put } from '@/utils/api';
 import { Task } from '@/types';
 import { queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useSubmittedTasks() {
-    return useQuery({
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+    const query = useQuery({
         queryKey: ['tasks', 'submitted'],
         queryFn: async () => {
             const data = await get<any[]>(`/tasks`);
@@ -22,10 +26,19 @@ export function useSubmittedTasks() {
                     } : undefined,
                 })) as Task[];
         },
+        enabled: isAuthenticated && !authLoading,
         refetchInterval: 5000,
         refetchOnWindowFocus: true,
         refetchOnReconnect: true,
     });
+
+    React.useEffect(() => {
+        if (isAuthenticated && !authLoading) {
+            query.refetch();
+        }
+    }, [isAuthenticated, authLoading, query]);
+
+    return query;
 }
 
 export function useApproveTaskMutation() {

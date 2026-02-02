@@ -28,6 +28,7 @@ export interface Task {
   title: string;
   description?: string;
   status: TaskStatus;
+  requiredRole?: UserRole;
   assigneeId?: string;
   assignee?: User;
   roomId: string;
