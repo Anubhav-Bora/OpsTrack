@@ -25,8 +25,8 @@ export const authService = {
             },
         });
 
-        // Generate JWT token
-        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+        // Generate JWT token with role
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
             expiresIn: '7d',
         });
 
@@ -46,8 +46,8 @@ export const authService = {
             throw new Error('Invalid credentials');
         }
 
-        // Generate JWT token
-        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
+        // Generate JWT token with role
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
             expiresIn: '7d',
         });
 

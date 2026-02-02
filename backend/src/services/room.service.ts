@@ -1,8 +1,36 @@
 import { roomRepo } from '../repositories/room.repository';
+import { prisma } from '../prisma';
 
 export const roomService = {
-    getAllRooms: async () => {
-        return await roomRepo.getAllRooms();
+    getAllRooms: async (userId: number, userRole: string) => {
+        // Global admins see all rooms
+        if (userRole === 'ADMIN') {
+            return await roomRepo.getAllRooms();
+        }
+
+        // Non-admins see only rooms they're members of
+        return await prisma.room.findMany({
+            where: {
+                members: {
+                    some: {
+                        userId: userId,
+                    },
+                },
+            },
+            include: {
+                creator: true,
+                members: {
+                    include: { user: true },
+                },
+                tasks: true,
+                _count: {
+                    select: {
+                        members: true,
+                        tasks: true
+                    }
+                }
+            },
+        });
     },
 
     getRoomById: async (id: number) => {

@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 export interface AuthRequest extends Request {
     userId?: number;
     email?: string;
+    userRole?: string;
 }
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -18,6 +19,7 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
         const decoded: any = jwt.verify(token, JWT_SECRET);
         req.userId = decoded.id;
         req.email = decoded.email;
+        req.userRole = decoded.role;
         next();
     } catch (error) {
         res.status(401).json({ error: 'Invalid token' });

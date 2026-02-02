@@ -27,7 +27,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const id = Math.random().toString(36).substring(2, 9);
       setToasts((prev) => [...prev, { id, type, title, message }]);
 
-      // Auto-remove after 5 seconds
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
       }, 5000);
@@ -77,38 +76,10 @@ const icons = {
 };
 
 const styles = {
-  success: "bg-success border-success/80 text-white shadow-lg shadow-success/30",
-  error: "bg-destructive border-destructive/80 text-white shadow-lg shadow-destructive/30",
-  warning: "bg-warning border-warning/80 text-white shadow-lg shadow-warning/30",
-  info: "bg-info border-info/80 text-white shadow-lg shadow-info/30",
-};
-
-const iconStyles = {
-  success: "text-white",
-  error: "text-white",
-  warning: "text-white",
-  info: "text-white",
-};
-
-const textStyles = {
-  success: "text-white font-semibold",
-  error: "text-white font-semibold",
-  warning: "text-white font-semibold",
-  info: "text-white font-semibold",
-};
-
-const messageStyles = {
-  success: "text-white/95",
-  error: "text-white/95",
-  warning: "text-white/95",
-  info: "text-white/95",
-};
-
-const closeButtonStyles = {
-  success: "text-white/70 hover:text-white hover:bg-white/20",
-  error: "text-white/70 hover:text-white hover:bg-white/20",
-  warning: "text-white/70 hover:text-white hover:bg-white/20",
-  info: "text-white/70 hover:text-white hover:bg-white/20",
+  success: "bg-gradient-to-br from-success to-success/80 border border-success/40 text-white shadow-lg shadow-success/25",
+  error: "bg-gradient-to-br from-destructive to-destructive/80 border border-destructive/40 text-white shadow-lg shadow-destructive/25",
+  warning: "bg-gradient-to-br from-warning to-warning/80 border border-warning/40 text-white shadow-lg shadow-warning/25",
+  info: "bg-gradient-to-br from-info to-info/80 border border-info/40 text-white shadow-lg shadow-info/25",
 };
 
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
@@ -117,20 +88,20 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-lg border p-4 animate-slide-in min-w-[320px] max-w-md backdrop-blur-sm",
+        "flex items-start gap-3 rounded-lg border p-4 animate-slide-in-right min-w-[320px] max-w-md backdrop-blur-md smooth-transition",
         styles[toast.type]
       )}
     >
-      <Icon className={cn("h-5 w-5 flex-shrink-0 mt-0.5", iconStyles[toast.type])} />
+      <Icon className="h-5 w-5 flex-shrink-0 mt-0.5 text-white animate-bounce-in" />
       <div className="flex-1 min-w-0">
-        <p className={cn("text-sm", textStyles[toast.type])}>{toast.title}</p>
+        <p className="text-sm text-white font-semibold">{toast.title}</p>
         {toast.message && (
-          <p className={cn("mt-1 text-sm leading-relaxed", messageStyles[toast.type])}>{toast.message}</p>
+          <p className="mt-1 text-sm leading-relaxed text-white/95">{toast.message}</p>
         )}
       </div>
       <button
         onClick={onClose}
-        className={cn("flex-shrink-0 rounded p-1 transition-colors", closeButtonStyles[toast.type])}
+        className="flex-shrink-0 rounded p-1 smooth-transition text-white/60 hover:text-white hover:bg-white/20"
       >
         <X className="h-4 w-4" />
       </button>

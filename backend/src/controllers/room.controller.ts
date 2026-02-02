@@ -5,7 +5,9 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 export const roomController = {
     getAllRooms: async (req: AuthRequest, res: Response) => {
         try {
-            const rooms = await roomService.getAllRooms();
+            const userId = req.userId!;
+            const userRole = req.userRole!;
+            const rooms = await roomService.getAllRooms(userId, userRole);
             const transformedRooms = rooms.map(room => ({
                 ...room,
                 membersCount: room._count.members,
@@ -14,10 +16,10 @@ export const roomController = {
             }));
             res.json(transformedRooms);
         } catch (error) {
+            console.error('Get all rooms error:', error);
             res.status(500).json({ error: 'Failed to fetch rooms' });
         }
     },
-
 
     getRoomById: async (req: AuthRequest, res: Response) => {
         try {
