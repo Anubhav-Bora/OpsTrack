@@ -27,7 +27,6 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiError>) => {
-    console.error('API Error:', error);
     if (error.response?.status === 401) {
       // Clear auth data and redirect to login
       localStorage.removeItem(AUTH_TOKEN_KEY);
@@ -45,7 +44,6 @@ export const request = async <T>(config: AxiosRequestConfig): Promise<T> => {
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const message = error.response?.data?.error || error.response?.data?.message || error.message;
-      console.error('Request failed:', { url: config.url, status: error.response?.status, message });
       throw new Error(message);
     }
     throw error;

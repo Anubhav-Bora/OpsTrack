@@ -74,9 +74,9 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading, a
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg mx-4 rounded-xl bg-card border shadow-elevated animate-scale-in">
+      <div className="relative w-full max-w-lg mx-4 rounded-xl bg-card border shadow-elevated animate-scale-in max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-6">
+        <div className="flex items-center justify-between border-b p-6 flex-shrink-0">
           <h2 className="text-lg font-semibold text-foreground">Create New Task</h2>
           <button
             onClick={onClose}
@@ -87,7 +87,7 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading, a
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
             <Input
@@ -226,17 +226,17 @@ export function TaskForm({ isOpen, onClose, onSubmit, members = [], isLoading, a
               </div>
             </div>
           </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Task"}
-            </Button>
-          </div>
         </form>
+
+        {/* Actions - Fixed at bottom */}
+        <div className="flex justify-end gap-3 p-6 border-t flex-shrink-0">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isLoading} onClick={handleSubmit}>
+            {isLoading ? "Creating..." : "Create Task"}
+          </Button>
+        </div>
       </div>
     </div>
   );

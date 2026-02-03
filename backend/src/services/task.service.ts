@@ -1,4 +1,5 @@
 import { taskRepo } from '../repositories/task.repository';
+import { taskDependencyRepo } from '../repositories/taskDependency.repository';
 import { authorizationService } from './authorization.service';
 import { TaskStatus, UserRole } from '@prisma/client';
 
@@ -19,7 +20,29 @@ export const taskService = {
         return await taskRepo.createTask(title, description, requiredRole, roomId, dueDate ? new Date(dueDate) : undefined, assigneeId);
     },
 
-    updateTaskStatus: async (id: number, status: TaskStatus) => {
+    updateTaskStatus: async (id: number, status: TaskStatus, userId?: number) => {
+        const task = await taskRepo.getTaskbyId(id);
+        if (!task) throw new Error('Task not found');
+
+        // Validate dependencies for statuses that require all dependencies to be completed
+        if (status === 'IN_PROGRESS' || status === 'SUBMITTED') {
+            const dependencies = await taskDependencyRepo.getTaskDependencies(id);
+            if (dependencies.length > 0) {
+                const incompleteDeps = dependencies.filter(dep => dep.dependsOn.status !== 'APPROVED');
+                if (incompleteDeps.length > 0) {
+                    const incompleteNames = incompleteDeps.map(dep => dep.dependsOn.title).join(', ');
+                    throw new Error(`Cannot ${status === 'IN_PROGRESS' ? 'start' : 'submit'} task: The following dependent tasks must be approved first: ${incompleteNames}`);
+                }
+            }
+        }
+
+        // For SUBMITTED status, ensure the user is the assignee
+        if (status === 'SUBMITTED') {
+            if (!userId) throw new Error('User ID is required to submit a task');
+            if (task.assignedTo !== userId) throw new Error('You can only submit your own tasks');
+            return await taskRepo.submitTask(id, userId);
+        }
+
         return await taskRepo.updateTaskStatus(id, status);
     },
 
@@ -32,21 +55,28 @@ export const taskService = {
     },
 
     assignTask: async (id: number, assignedTo: number, userId: number, roomId: number) => {
-        console.log(`[Task Service] assignTask - taskId: ${id}, assignedTo: ${assignedTo}, userId: ${userId}, roomId: ${roomId}`);
         const canAssign = await authorizationService.canAssignTasks(userId, roomId);
-        console.log(`[Task Service] Can assign tasks: ${canAssign}`);
         if (!canAssign) {
             throw new Error('You do not have permission to assign tasks');
         }
-        const result = await taskRepo.assignTask(id, assignedTo);
-        console.log(`[Task Service] Task assigned:`, { id: result.id, assignedTo: result.assignedTo });
-        return result;
+        return await taskRepo.assignTask(id, assignedTo);
     },
 
     submitTask: async (id: number, userId: number) => {
         const task = await taskRepo.getTaskbyId(id);
         if (!task) throw new Error('Task not found');
         if (task.assignedTo !== userId) throw new Error('You can only submit your own tasks');
+        
+        // Check if all dependencies are completed (APPROVED)
+        const dependencies = await taskDependencyRepo.getTaskDependencies(id);
+        if (dependencies.length > 0) {
+            const incompleteDeps = dependencies.filter(dep => dep.dependsOn.status !== 'APPROVED');
+            if (incompleteDeps.length > 0) {
+                const incompleteNames = incompleteDeps.map(dep => dep.dependsOn.title).join(', ');
+                throw new Error(`Cannot submit: The following dependent tasks must be approved first: ${incompleteNames}`);
+            }
+        }
+        
         return await taskRepo.submitTask(id, userId);
     },
 
@@ -92,9 +122,6 @@ export const taskService = {
     },
 
     getTasksByAssignee: async (userId: number) => {
-        console.log(`[Task Service] getTasksByAssignee for userId: ${userId}, type: ${typeof userId}`);
-        const tasks = await taskRepo.getTasksByAssignee(userId);
-        console.log(`[Task Service] Found ${tasks.length} tasks`);
-        return tasks;
+        return await taskRepo.getTasksByAssignee(userId);
     },
 };

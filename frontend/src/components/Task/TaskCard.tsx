@@ -1,8 +1,9 @@
-import { Calendar, MoreHorizontal, Clock, AlertCircle, ChevronRight, MessageCircle } from "lucide-react";
+import { Calendar, MoreHorizontal, Clock, AlertCircle, ChevronRight, MessageCircle, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task } from "@/types";
 import { Badge, getStatusVariant } from "@/components/Common/Badge";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
+import { useTaskDependencies } from "@/hooks/useTaskDependencies";
 
 interface TaskCardProps {
   task: Task;
@@ -10,9 +11,40 @@ interface TaskCardProps {
   onMenuClick?: () => void;
   showRoom?: boolean;
   className?: string;
+  allTasks?: Task[];
 }
 
-export function TaskCard({ task, onClick, onMenuClick, className }: TaskCardProps) {
+// Helper component to show task dependencies
+function TaskDependencyInfo({ task, allTasks }: { task: Task; allTasks?: Task[] }) {
+  const { data: dependencies = [] } = useTaskDependencies(task.id);
+  
+  if (dependencies.length === 0) return null;
+
+  const incompleteDeps = dependencies.filter(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.status !== "APPROVED";
+  });
+
+  if (incompleteDeps.length === 0) {
+    return (
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 text-success">
+        <Link2 className="h-3.5 w-3.5" />
+        <span className="font-medium text-xs">Dependencies Complete</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-warning/10 text-warning">
+      <Link2 className="h-3.5 w-3.5" />
+      <span className="font-medium text-xs">
+        {incompleteDeps.length} Pending Dependencies
+      </span>
+    </div>
+  );
+}
+
+export function TaskCard({ task, onClick, onMenuClick, className, allTasks }: TaskCardProps) {
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() &&
     task.status !== 'APPROVED' && task.status !== 'REJECTED';
 
@@ -104,6 +136,7 @@ export function TaskCard({ task, onClick, onMenuClick, className }: TaskCardProp
               <span className="font-medium text-xs">Has rejection note</span>
             </div>
           )}
+          <TaskDependencyInfo task={task} allTasks={allTasks} />
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 smooth-transition" />
       </div>
@@ -111,7 +144,10 @@ export function TaskCard({ task, onClick, onMenuClick, className }: TaskCardProp
   );
 }
 
-export function TaskCardCompact({ task, onClick }: TaskCardProps) {
+export function TaskCardCompact({ task, onClick, allTasks }: TaskCardProps) {
+  const { data: dependencies = [] } = useTaskDependencies(task.id);
+  const hasDependencies = dependencies.length > 0;
+
   return (
     <div
       onClick={onClick}
@@ -138,6 +174,9 @@ export function TaskCardCompact({ task, onClick }: TaskCardProps) {
       <div className="flex items-center gap-2">
         {task.status === "REJECTED" && task.rejectionNote && (
           <MessageCircle className="h-4 w-4 text-destructive" title="Has rejection note" />
+        )}
+        {hasDependencies && (
+          <Link2 className="h-4 w-4 text-warning" title="Has dependencies" />
         )}
         <Badge variant={getStatusVariant(task.status)} size="sm">
           {TASK_STATUS_LABELS[task.status]}

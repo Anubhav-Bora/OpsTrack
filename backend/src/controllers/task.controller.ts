@@ -45,10 +45,10 @@ export const taskController = {
         try {
             const { id } = req.params;
             const { status } = req.body;
-            const task = await taskService.updateTaskStatus(Number(id), status);
+            const task = await taskService.updateTaskStatus(Number(id), status, Number(req.userId!));
             res.json(task);
-        } catch (error) {
-            res.status(400).json({ error: 'Failed to update task status' });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message || 'Failed to update task status' });
         }
     },
 
@@ -67,12 +67,9 @@ export const taskController = {
         try {
             const { id } = req.params;
             const { assignedTo, roomId } = req.body;
-            console.log(`[Task Controller] assignTask - taskId: ${id}, assignedTo: ${assignedTo}, roomId: ${roomId}, requestedBy: ${req.userId}`);
             const task = await taskService.assignTask(Number(id), assignedTo, Number(req.userId!), roomId);
-            console.log(`[Task Controller] Task assigned successfully:`, { taskId: task.id, assignedTo: task.assignedTo, title: task.title });
             res.json(task);
         } catch (error: any) {
-            console.error(`[Task Controller] assignTask error:`, error.message);
             res.status(400).json({ error: error.message });
         }
     },
@@ -143,15 +140,9 @@ export const taskController = {
     getTasksByAssignee: async (req: AuthRequest, res: Response) => {
         try {
             const userId = Number(req.userId!);
-            console.log(`[Task Controller] Fetching tasks for user ${userId}`);
             const tasks = await taskService.getTasksByAssignee(userId);
-            console.log(`[Task Controller] Found ${tasks.length} tasks for user ${userId}`);
-            if (tasks.length > 0) {
-                console.log(`[Task Controller] Task details:`, tasks.map(t => ({ id: t.id, title: t.title, assignedTo: t.assignedTo })));
-            }
             res.json(tasks);
         } catch (error) {
-            console.error('Get tasks by assignee error:', error);
             res.status(500).json({ error: 'Failed to fetch tasks' });
         }
     },

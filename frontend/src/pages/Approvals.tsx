@@ -10,6 +10,7 @@ import { Badge, getStatusVariant } from "@/components/Common/Badge";
 import { EmptyState } from "@/components/Common/EmptyState";
 import { useToastNotification } from "@/components/Common/Toast";
 import { useSubmittedTasks, useApproveTaskMutation, useRejectTaskMutation } from "@/hooks/useApprovals";
+import { useTasks } from "@/hooks/useTasks";
 import { Task, TaskStatus } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
@@ -20,8 +21,9 @@ export default function Approvals() {
   const [taskToReject, setTaskToReject] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Load submitted tasks
+  // Load submitted tasks and all tasks for dependency checking
   const { data: tasks = [], isLoading } = useSubmittedTasks();
+  const { data: allTasks = [] } = useTasks();
   const { mutate: approveTask } = useApproveTaskMutation();
   const { mutate: rejectTask } = useRejectTaskMutation();
 
@@ -219,6 +221,7 @@ export default function Approvals() {
           isOpen={!!selectedTask}
           onClose={() => setSelectedTask(null)}
           onStatusChange={handleStatusChange}
+          allTasks={allTasks}
           canEdit={true}
         />
       )}

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { TaskDependencies } from "./TaskDependencies";
 import { EditTaskModal } from "./EditTaskModal";
 import { RejectionDialog } from "./RejectionDialog";
+import { useTaskDependencies } from "@/hooks/useTaskDependencies";
 
 interface TaskModalProps {
   task: Task;
@@ -36,6 +37,9 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
   // Use passed prop if available, otherwise calculate from members
   const canEdit = canEditProp || canApproveInRoom;
 
+  // Get task dependencies to check if all are completed
+  const { data: dependencies = [] } = useTaskDependencies(task.id);
+
   // Handle escape key
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -56,9 +60,19 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
   if (!isOpen) return null;
 
   const isAssignedToMe = task.assigneeId === user?.id;
-  const canSubmit = isAssignedToMe && (task.status === "PENDING" || task.status === "IN_PROGRESS" || task.status === "REJECTED");
+  
+  // Check if all dependencies are completed
+  const allDependenciesCompleted = dependencies.length === 0 || dependencies.every(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.status === "APPROVED";
+  });
+
+  const canSubmit = isAssignedToMe && 
+    (task.status === "PENDING" || task.status === "IN_PROGRESS" || task.status === "REJECTED") &&
+    allDependenciesCompleted;
+  
   const canApprove = canApproveInRoom && task.status === "SUBMITTED";
-  const canStartProgress = isAssignedToMe && task.status === "PENDING";
+  const canStartProgress = isAssignedToMe && task.status === "PENDING" && allDependenciesCompleted;
 
   const handleReject = (rejectionNote: string) => {
     if (onStatusChange) {
@@ -88,6 +102,14 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
               <Badge variant={getStatusVariant(task.status)}>
                 {TASK_STATUS_LABELS[task.status]}
               </Badge>
+              {dependencies.length > 0 && (
+                <Badge variant={allDependenciesCompleted ? "success" : "warning"} className="text-xs">
+                  {allDependenciesCompleted ? "✓" : dependencies.filter(dep => {
+                    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+                    return depTask?.status !== "APPROVED";
+                  }).length} Dependencies {allDependenciesCompleted ? "Complete" : "Pending"}
+                </Badge>
+              )}
               {task.dueDate && (
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
@@ -194,6 +216,39 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
             </div>
           </div>
         </div>
+
+        {/* Dependency warning */}
+        {isAssignedToMe && !allDependenciesCompleted && dependencies.length > 0 && (
+          <div className="border-t bg-warning/10 border-warning/20 p-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-warning/20 p-1">
+                <Clock className="h-4 w-4 text-warning" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-warning-foreground">
+                  Task Dependencies Required
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This task depends on other tasks that must be completed and approved first:
+                </p>
+                <div className="mt-2 space-y-1">
+                  {dependencies.map(dep => {
+                    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+                    return (
+                      <div key={dep.id} className="flex items-center gap-2 text-sm">
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-foreground">{depTask?.title || `Task ${dep.dependsOnTaskId}`}</span>
+                        <Badge variant={getStatusVariant(depTask?.status || "PENDING")} className="text-xs">
+                          {depTask?.status || "Unknown"}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="border-t p-4 bg-secondary/30 flex justify-between items-center gap-3">

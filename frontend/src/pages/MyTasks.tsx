@@ -9,8 +9,37 @@ import { Button } from "@/components/ui/button";
 import { useToastNotification } from "@/components/Common/Toast";
 import { useMyTasks } from "@/hooks/useMyTasks";
 import { useUpdateTaskStatus, useSubmitTask } from "@/hooks/useTaskStatus";
+import { useTaskDependencies } from "@/hooks/useTaskDependencies";
+import { useTasks } from "@/hooks/useTasks";
 import { Task, TaskStatus } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
+
+// Helper component to check if task can be submitted
+function TaskSubmitButton({ task, allTasks, onSubmit }: { 
+  task: Task; 
+  allTasks: Task[];
+  onSubmit: (task: Task) => void; 
+}) {
+  const { data: dependencies = [] } = useTaskDependencies(task.id);
+  
+  const allDependenciesCompleted = dependencies.length === 0 || dependencies.every(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.status === "APPROVED";
+  });
+
+  const canSubmit = allDependenciesCompleted;
+
+  return (
+    <Button 
+      size="sm" 
+      onClick={() => onSubmit(task)}
+      disabled={!canSubmit}
+      title={!canSubmit ? "Cannot submit: pending dependencies" : "Submit for approval"}
+    >
+      Submit
+    </Button>
+  );
+}
 
 export default function MyTasks() {
   const { addToast } = useToastNotification();
@@ -19,8 +48,9 @@ export default function MyTasks() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
 
-  // Load user's tasks
+  // Load user's tasks and all tasks for dependency checking
   const { data: tasks = [], isLoading } = useMyTasks();
+  const { data: allTasks = [] } = useTasks();
   const { mutate: updateStatus } = useUpdateTaskStatus();
   const { mutate: submitTask } = useSubmitTask();
 
@@ -179,9 +209,11 @@ export default function MyTasks() {
                     {(task.status === "PENDING" ||
                       task.status === "IN_PROGRESS" ||
                       task.status === "REJECTED") && (
-                        <Button size="sm" onClick={() => handleQuickSubmit(task)}>
-                          Submit
-                        </Button>
+                        <TaskSubmitButton 
+                          task={task}
+                          allTasks={allTasks}
+                          onSubmit={handleQuickSubmit}
+                        />
                       )}
                     {task.status === "SUBMITTED" && (
                       <span className="text-sm text-muted-foreground">Awaiting approval</span>
@@ -212,6 +244,7 @@ export default function MyTasks() {
           isOpen={!!selectedTask}
           onClose={() => setSelectedTask(null)}
           onStatusChange={handleStatusChange}
+          allTasks={allTasks}
         />
       )}
     </Layout>

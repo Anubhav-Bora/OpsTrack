@@ -1,7 +1,6 @@
 import { MoreHorizontal, Shield, Crown, User as UserIcon, Trash2, ArrowUp, ArrowDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { RoomMember, UserRole } from "@/types";
-import { Badge, getRoleVariant } from "@/components/Common/Badge";
+import { RoomMember, RoomRole } from "@/types";
+import { Badge, getRoomRoleVariant } from "@/components/Common/Badge";
 import { ROLE_LABELS } from "@/utils/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -29,10 +28,6 @@ export function MembersList({
   isLoading,
 }: MembersListProps) {
   const { user } = useAuth();
-  
-  // Check if current user is admin in THIS room
-  const currentUserMembership = members.find((m) => m.userId === user?.id);
-  const isRoomAdmin = currentUserMembership?.role === "ADMIN";
 
   if (isLoading) {
     return (
@@ -58,7 +53,7 @@ export function MembersList({
     );
   }
 
-  const getRoleIcon = (role: UserRole) => {
+  const getRoleIcon = (role: RoomRole) => {
     switch (role) {
       case "ADMIN":
         return Shield;
@@ -74,7 +69,8 @@ export function MembersList({
       {members.map((member) => {
         const RoleIcon = getRoleIcon(member.role);
         const isCurrentUser = member.userId === user?.id;
-        const canManage = isRoomAdmin && !isCurrentUser && member.role !== "ADMIN";
+        // Allow action if callback is provided AND user is not the member being acted on AND member is not an admin
+        const canManage = (onPromote || onDemote || onRemove) && !isCurrentUser && member.role !== "ADMIN";
 
         return (
           <div
@@ -101,7 +97,7 @@ export function MembersList({
             </div>
 
             <div className="flex items-center gap-3">
-              <Badge variant={getRoleVariant(member.role)}>
+              <Badge variant={getRoomRoleVariant(member.role)}>
                 <RoleIcon className="h-3 w-3 mr-1" />
                 {ROLE_LABELS[member.role]}
               </Badge>
@@ -109,19 +105,27 @@ export function MembersList({
               {canManage && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                    >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {member.role !== "LEADER" && onPromote && (
-                      <DropdownMenuItem onClick={() => onPromote(member.id)}>
+                      <DropdownMenuItem 
+                        onClick={() => onPromote(member.id)}
+                      >
                         <ArrowUp className="h-4 w-4 mr-2" />
                         Promote to Leader
                       </DropdownMenuItem>
                     )}
                     {member.role === "LEADER" && onDemote && (
-                      <DropdownMenuItem onClick={() => onDemote(member.id)}>
+                      <DropdownMenuItem 
+                        onClick={() => onDemote(member.id)}
+                      >
                         <ArrowDown className="h-4 w-4 mr-2" />
                         Demote to Member
                       </DropdownMenuItem>

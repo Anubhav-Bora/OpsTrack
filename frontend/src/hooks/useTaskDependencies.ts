@@ -66,11 +66,13 @@ export function useTaskDependents(taskId: string) {
 
 export function useAddTaskDependency() {
     return useMutation({
-        mutationFn: ({ taskId, dependsOnTaskId }: { taskId: string; dependsOnTaskId: string }) =>
-            post<TaskDependency>('/task-dependencies', {
+        mutationFn: async ({ taskId, dependsOnTaskId }: { taskId: string; dependsOnTaskId: string }) => {
+            const result = await post<TaskDependency>('/task-dependencies', {
                 taskId: Number(taskId),
                 dependsOnTaskId: Number(dependsOnTaskId),
-            }),
+            });
+            return result;
+        },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['task-dependencies', variables.taskId] });
             queryClient.invalidateQueries({ queryKey: ['task-dependents', variables.dependsOnTaskId] });

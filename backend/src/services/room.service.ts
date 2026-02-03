@@ -3,15 +3,12 @@ import { prisma } from '../prisma';
 
 export const roomService = {
     getAllRooms: async (userId: number, userRole: string) => {
-        console.log('[Room Service] getAllRooms - userId:', userId, 'type:', typeof userId, 'userRole:', userRole);
         // Global admins see all rooms
         if (userRole === 'ADMIN') {
-            console.log('[Room Service] User is ADMIN, returning all rooms');
             return await roomRepo.getAllRooms();
         }
 
         // Non-admins see only rooms they're members of
-        console.log('[Room Service] Non-admin user, querying rooms where user is member');
         const rooms = await prisma.room.findMany({
             where: {
                 members: {
@@ -34,14 +31,6 @@ export const roomService = {
                 }
             },
         });
-        console.log('[Room Service] Found', rooms.length, 'rooms for user', userId);
-        if (rooms.length === 0) {
-            console.log('[Room Service] No rooms found. Checking all room members:');
-            const allMembers = await prisma.roomMember.findMany({ include: { user: true, room: true } });
-            allMembers.forEach(m => {
-                console.log(`  - Room: ${m.room.name}, User: ${m.user.name} (ID: ${m.userId})`);
-            });
-        }
         return rooms;
     },
 
@@ -77,7 +66,6 @@ export const roomService = {
     },
 
     deleteRoom: async (id: number) => {
-        console.log(`Service: Starting deletion of room ${id}`);
         return await roomRepo.deleteRoom(id);
     },
 };

@@ -17,6 +17,8 @@ import { useAuth, useRoomRole } from "@/contexts/AuthContext";
 import { useToastNotification } from "@/components/Common/Toast";
 import { useRoomDetail, useRoomTasks, useRoomMembers } from "@/hooks/useRoomDetail";
 import { useCreateTask, useApproveTask, useRejectTask, useEditTask, useDeleteTask } from "@/hooks/useTasks";
+import { useUpdateTaskStatus, useSubmitTask } from '@/hooks/useTaskStatus';
+import { useAddTaskDependency } from '@/hooks/useTaskDependencies';
 import { useUpdateMemberRole, useRemoveMember } from "@/hooks/useMemberManagement";
 import { useAddMember, useAllUsers } from "@/hooks/useAddMember";
 import { useDeleteRoom } from "@/hooks/useRooms";
@@ -37,6 +39,7 @@ export default function RoomDetail() {
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showUserStats, setShowUserStats] = useState(false);
+  const [pendingDependencies, setPendingDependencies] = useState<string[]>([]);
 
   // Fetch data
   const { data: room, isLoading: roomLoading } = useRoomDetail(Number(roomId));
@@ -49,9 +52,12 @@ export default function RoomDetail() {
   const { mutate: editTask } = useEditTask();
   const { mutate: deleteTask } = useDeleteTask();
   const { mutate: deleteRoom, isPending: isDeletingRoom } = useDeleteRoom();
+  const { mutate: updateStatus } = useUpdateTaskStatus();
+  const { mutate: submitTask } = useSubmitTask();
   const { mutate: updateMemberRole } = useUpdateMemberRole();
   const { mutate: removeMember } = useRemoveMember();
   const { mutate: addMember, isPending: isAddingMember } = useAddMember();
+  const { mutate: addTaskDependency } = useAddTaskDependency();
   
   // Fetch room users with stats (for leader/admin)
   const { data: roomUsersWithStats = [], isLoading: isLoadingUserStats } = useRoomUsersWithStats(roomId);
@@ -93,6 +99,36 @@ export default function RoomDetail() {
           addToast("error", "Failed to reject", error instanceof Error ? error.message : "Please try again.");
         },
       });
+    } else if (status === "SUBMITTED") {
+      submitTask({ taskId }, {
+        onSuccess: () => {
+          setSelectedTask(null);
+          addToast("success", "Task submitted", "Task has been submitted for approval.");
+        },
+        onError: (error) => {
+          addToast("error", "Cannot submit task", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
+    } else if (status === "IN_PROGRESS") {
+      updateStatus({ taskId, status }, {
+        onSuccess: () => {
+          setSelectedTask(null);
+          addToast("success", "Task started", "Task is now in progress.");
+        },
+        onError: (error) => {
+          addToast("error", "Cannot start task", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
+    } else {
+      updateStatus({ taskId, status }, {
+        onSuccess: () => {
+          setSelectedTask(null);
+          addToast("success", "Task updated", `Task status changed to ${TASK_STATUS_LABELS[status]}.`);
+        },
+        onError: (error) => {
+          addToast("error", "Failed to update task", error instanceof Error ? error.message : "Please try again.");
+        },
+      });
     }
   };
 
@@ -109,10 +145,28 @@ export default function RoomDetail() {
   };
 
   const handleCreateTask = (data: CreateTaskInput) => {
+    // Capture dependencies before async to avoid closure issues
+    const depsToAdd = [...pendingDependencies];
+    
     createTask({ ...data, roomId: room?.id || "" }, {
-      onSuccess: () => {
+      onSuccess: (createdTask: any) => {
+        // Add dependencies after task is created
+        const taskId = String(createdTask.id);
+        if (depsToAdd.length > 0) {
+          depsToAdd.forEach((depId) => {
+            addTaskDependency(
+              { taskId, dependsOnTaskId: depId },
+              {
+                onError: (error) => {
+                  addToast("error", "Dependency failed", `Failed to add dependency: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                },
+              }
+            );
+          });
+        }
+        setPendingDependencies([]);
         setShowCreateTask(false);
-        addToast("success", "Task created", `"${data.title}" has been created.`);
+        addToast("success", "Task created", `"${data.title}" has been created${depsToAdd.length > 0 ? ` with ${depsToAdd.length} dependencies` : ''}.`);
       },
       onError: (error) => {
         addToast("error", "Failed to create task", error instanceof Error ? error.message : "Please try again.");
@@ -307,6 +361,7 @@ export default function RoomDetail() {
                   ? "Try adjusting your filters."
                   : "Create your first task to get started."
               }
+              allTasks={tasks}
             />
           </TabsContent>
 
@@ -392,11 +447,17 @@ export default function RoomDetail() {
       {/* Create Task Modal */}
       <TaskForm
         isOpen={showCreateTask}
-        onClose={() => setShowCreateTask(false)}
+        onClose={() => {
+          setShowCreateTask(false);
+          setPendingDependencies([]);
+        }}
         onSubmit={handleCreateTask}
         members={memberUsers}
         isLoading={isCreatingTask}
         availableTasks={tasks}
+        dependencies={pendingDependencies}
+        onAddDependency={(depId) => setPendingDependencies(prev => [...prev, depId])}
+        onRemoveDependency={(depId) => setPendingDependencies(prev => prev.filter(id => id !== depId))}
       />
 
       {/* Add Member Modal */}

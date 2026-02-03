@@ -39,14 +39,10 @@ export const taskRepo = {
 
     //assign task to user
     assignTask: (id: number, assignedTo: number) => {
-        console.log(`[Task Repository] assignTask - taskId: ${id}, assignedTo: ${assignedTo}`);
         return prisma.task.update({
             where: { id },
             data: { assignedTo },
             include: { assignee: true, room: true, dependencies: true, dependents: true },
-        }).then(task => {
-            console.log(`[Task Repository] Task updated:`, { id: task.id, assignedTo: task.assignedTo });
-            return task;
         });
     },
 
@@ -116,7 +112,6 @@ export const taskRepo = {
 
     //get tasks assigned to user
     getTasksByAssignee: (userId: number) => {
-        console.log(`[Task Repository] getTasksByAssignee - userId: ${userId}, type: ${typeof userId}`);
         return prisma.task.findMany({
             where: { assignedTo: userId },
             include: { room: true, assignee: true, dependencies: true, dependents: true },

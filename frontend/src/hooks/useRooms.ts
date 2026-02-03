@@ -14,21 +14,14 @@ export function useRooms() {
     const query = useQuery({
         queryKey: ['rooms'],
         queryFn: async () => {
-            try {
-                console.log('[useRooms] Fetching rooms...');
-                const data = await get<any[]>('/rooms');
-                console.log('[useRooms] Rooms fetched:', data);
-                const transformed = data.map(room => ({
-                    ...room,
-                    id: String(room.id),
-                    createdBy: String(room.createdBy),
-                })) as Room[];
-                dispatch(setRooms(transformed));
-                return transformed;
-            } catch (error) {
-                console.error('[useRooms] Error fetching rooms:', error);
-                throw error;
-            }
+            const data = await get<any[]>('/rooms');
+            const transformed = data.map(room => ({
+                ...room,
+                id: String(room.id),
+                createdBy: String(room.createdBy),
+            })) as Room[];
+            dispatch(setRooms(transformed));
+            return transformed;
         },
         enabled: isAuthenticated && !authLoading,
         refetchInterval: 5000,
@@ -40,7 +33,6 @@ export function useRooms() {
     // Manually refetch when auth finishes loading
     React.useEffect(() => {
         if (isAuthenticated && !authLoading) {
-            console.log('[useRooms] Auth loaded, refetching rooms');
             query.refetch();
         }
     }, [isAuthenticated, authLoading, query]);

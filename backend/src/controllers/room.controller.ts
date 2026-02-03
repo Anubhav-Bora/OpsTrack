@@ -7,9 +7,7 @@ export const roomController = {
         try {
             const userId = Number(req.userId!);
             const userRole = req.userRole!;
-            console.log('[Room Controller] getAllRooms - userId:', userId, 'email:', req.email, 'userRole:', userRole);
             const rooms = await roomService.getAllRooms(userId, userRole);
-            console.log('[Room Controller] Rooms found:', rooms.length);
             const transformedRooms = rooms.map(room => ({
                 ...room,
                 membersCount: room._count.members,
@@ -18,7 +16,6 @@ export const roomController = {
             }));
             res.json(transformedRooms);
         } catch (error) {
-            console.error('Get all rooms error:', error);
             res.status(500).json({ error: 'Failed to fetch rooms' });
         }
     },
@@ -70,15 +67,10 @@ export const roomController = {
             }
 
             const roomId = Number(id);
-            console.log(`Attempting to delete room ${roomId}`);
-            
             await roomService.deleteRoom(roomId);
-            console.log(`Successfully deleted room ${roomId}`);
             res.json({ message: 'Room deleted' });
         } catch (error) {
-            console.error('Delete room error:', error);
             const message = error instanceof Error ? error.message : 'Failed to delete room';
-            console.error('Error details:', JSON.stringify(error, null, 2));
             res.status(400).json({ error: message });
         }
     },

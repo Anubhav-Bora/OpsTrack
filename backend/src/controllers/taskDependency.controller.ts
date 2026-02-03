@@ -34,10 +34,13 @@ export const taskDependencyController = {
     addTaskDependency: async (req: Request, res: Response) => {
         try {
             const { taskId, dependsOnTaskId } = req.body;
-            const dependency = await taskDependencyService.addTaskDependency(taskId, dependsOnTaskId);
+            const dependency = await taskDependencyService.addTaskDependency(
+                Number(taskId), 
+                Number(dependsOnTaskId)
+            );
             res.status(201).json(dependency);
-        } catch (error) {
-            res.status(400).json({ error: 'Failed to add task dependency' });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message || 'Failed to add task dependency' });
         }
     },
 

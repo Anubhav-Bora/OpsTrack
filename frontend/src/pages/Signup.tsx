@@ -57,7 +57,6 @@ export default function Signup() {
       addToast("success", "Account created!", "Welcome to Workspace.");
       navigate("/dashboard");
     } catch (error) {
-      console.error("Signup error:", error);
       const errorMessage = error instanceof Error ? error.message : "Please try again.";
       addToast("error", "Signup failed", errorMessage);
     } finally {

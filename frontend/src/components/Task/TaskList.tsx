@@ -11,6 +11,7 @@ interface TaskListProps {
   variant?: "default" | "compact";
   emptyMessage?: string;
   emptyDescription?: string;
+  allTasks?: Task[];
 }
 
 export function TaskList({
@@ -20,6 +21,7 @@ export function TaskList({
   variant = "default",
   emptyMessage = "No tasks found",
   emptyDescription = "Create your first task to get started.",
+  allTasks,
 }: TaskListProps) {
   if (isLoading) {
     return (
@@ -49,6 +51,7 @@ export function TaskList({
             key={task.id}
             task={task}
             onClick={() => onTaskClick?.(task)}
+            allTasks={allTasks}
           />
         ))}
       </div>
@@ -58,7 +61,12 @@ export function TaskList({
   return (
     <div className="space-y-3">
       {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} onClick={() => onTaskClick?.(task)} />
+        <TaskCard 
+          key={task.id} 
+          task={task} 
+          onClick={() => onTaskClick?.(task)} 
+          allTasks={allTasks}
+        />
       ))}
     </div>
   );

@@ -1,9 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
-generator client {
-  provider = "prisma-client-js"
+model User {
+  id              Int          @id @default(autoincrement())
+  name            String
+  role            UserRole
+  createdAt       DateTime     @default(now())
+  email           String?      @unique
+  password        String?
+  roomsCreated    Room[]       @relation("RoomCreator")
+  roomMemberships RoomMember[]
+  tasks           Task[]
+}
+
+model Room {
+  id          Int          @id @default(autoincrement())
+  name        String
+  createdBy   Int
+  createdAt   DateTime     @default(now())
+  description String?
+  creator     User         @relation("RoomCreator", fields: [createdBy], references: [id])
+  members     RoomMember[]
+  tasks       Task[]
+}
+
+model Task {
+  id            Int              @id @default(autoincrement())
+  title         String
+  status        TaskStatus       @default(PENDING)
+  requiredRole  UserRole
+  assignedTo    Int?
+  roomId        Int
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  startedAt     DateTime?
+  approvedAt    DateTime?
+  approvedBy    Int?
+  submittedAt   DateTime?
+  submittedBy   Int?
+  description   String?
+  dueDate       DateTime?
+  rejectedAt    DateTime?
+  rejectionNote String?
+  assignee      User?            @relation(fields: [assignedTo], references: [id])
+  room          Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  dependents    TaskDependency[] @relation("TaskIsPrerequisite")
+  dependencies  TaskDependency[] @relation("TaskDependsOn")
+}
+
+model RoomMember {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  roomId    Int
+  role      RoomRole @default(MEMBER)
+  createdAt DateTime @default(now())
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, roomId])
+}
+
+model TaskDependency {
+  id              Int  @id @default(autoincrement())
+  taskId          Int
+  dependsOnTaskId Int
+  dependsOn       Task @relation("TaskIsPrerequisite", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+  task            Task @relation("TaskDependsOn", fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, dependsOnTaskId])
 }
 
 enum UserRole {
@@ -23,93 +92,8 @@ enum TaskStatus {
   BLOCKED
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String?  @unique
-  password  String?
-  role      UserRole
-
-  tasks     Task[]
-  roomsCreated Room[] @relation("RoomCreator")
-  roomMemberships RoomMember[]
-
-  createdAt DateTime @default(now())
-}
-
-model Room {
-  id        Int      @id @default(autoincrement())
-  name      String
-  description String?
-
-  createdBy Int
-  creator   User     @relation("RoomCreator", fields: [createdBy], references: [id])
-
-  members   RoomMember[]
-  tasks     Task[]
-
-  createdAt DateTime @default(now())
-}
-
-model Task {
-  id           Int        @id @default(autoincrement())
-  title        String
-  description  String?
-  status       TaskStatus @default(PENDING)
-  requiredRole UserRole
-
-  assignedTo   Int?
-  assignee     User?      @relation(fields: [assignedTo], references: [id])
-
-  roomId       Int
-  room         Room       @relation(fields: [roomId], references: [id])
-
-  dueDate      DateTime?
-  startedAt    DateTime?
-  submittedAt  DateTime?
-  submittedBy  Int?
-  approvedAt   DateTime?
-  approvedBy   Int?
-  rejectedAt   DateTime?
-  rejectionNote String?
-
-  dependencies TaskDependency[] @relation("TaskDependsOn")
-  dependents   TaskDependency[] @relation("TaskIsPrerequisite")
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-}
-
 enum RoomRole {
   LEADER
   ADMIN
   MEMBER
-}
-
-model RoomMember {
-  id        Int      @id @default(autoincrement())
-  
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  
-  roomId    Int
-  room      Room     @relation(fields: [roomId], references: [id])
-  
-  role      RoomRole @default(MEMBER)
-  
-  createdAt DateTime @default(now())
-  
-  @@unique([userId, roomId])
-}
-
-model TaskDependency {
-  id              Int @id @default(autoincrement())
-
-  taskId          Int
-  dependsOnTaskId Int
-
-  task        Task @relation("TaskDependsOn", fields: [taskId], references: [id])
-  dependsOn   Task @relation("TaskIsPrerequisite", fields: [dependsOnTaskId], references: [id])
-
-  @@unique([taskId, dependsOnTaskId])
 }
