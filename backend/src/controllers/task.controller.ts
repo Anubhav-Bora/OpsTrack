@@ -2,138 +2,142 @@ import { Response } from 'express';
 import { taskService } from '../services/task.service';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
+// Type assertion helpers for Express 5.x compatibility
+const getParams = (req: any) => req.params;
+const getBody = (req: any) => req.body;
+
 export const taskController = {
     getAllTasks: async (req: AuthRequest, res: Response) => {
         try {
             const tasks = await taskService.getAllTasks();
-            res.json(tasks);
+            return (res as any).json(tasks);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch tasks' });
+            return (res as any).status(500).json({ error: 'Failed to fetch tasks' });
         }
     },
 
     getTaskById: async (req: AuthRequest, res: Response) => {
         try {
-            const { id } = req.params;
+            const { id } = getParams(req);
             const task = await taskService.getTaskById(Number(id));
             if (!task) {
-                return res.status(404).json({ error: 'Task not found' });
+                return (res as any).status(404).json({ error: 'Task not found' });
             }
-            res.json(task);
+            return (res as any).json(task);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch task' });
+            return (res as any).status(500).json({ error: 'Failed to fetch task' });
         }
     },
 
     createTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { title, description, requiredRole = 'BACKEND', roomId, dueDate, assigneeId } = req.body;
+            const { title, description, requiredRole = 'BACKEND', roomId, dueDate, assigneeId } = getBody(req);
             if (!title) {
-                return res.status(400).json({ error: 'Title is required' });
+                return (res as any).status(400).json({ error: 'Title is required' });
             }
             if (!roomId) {
-                return res.status(400).json({ error: 'Room ID is required' });
+                return (res as any).status(400).json({ error: 'Room ID is required' });
             }
             const task = await taskService.createTask(title, description, requiredRole, roomId, dueDate, Number(req.userId!), assigneeId);
-            res.status(201).json(task);
+            return (res as any).status(201).json(task);
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            return (res as any).status(400).json({ error: error.message });
         }
     },
 
     updateTaskStatus: async (req: AuthRequest, res: Response) => {
         try {
-            const { id } = req.params;
-            const { status } = req.body;
+            const { id } = getParams(req);
+            const { status } = getBody(req);
             const task = await taskService.updateTaskStatus(Number(id), status, Number(req.userId!));
-            res.json(task);
+            return (res as any).json(task);
         } catch (error: any) {
-            res.status(400).json({ error: error.message || 'Failed to update task status' });
+            return (res as any).status(400).json({ error: error.message || 'Failed to update task status' });
         }
     },
 
     updateTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { id } = req.params;
-            const { title, description, requiredRole, dueDate, roomId } = req.body;
+            const { id } = getParams(req);
+            const { title, description, requiredRole, dueDate, roomId } = getBody(req);
             const task = await taskService.updateTask(Number(id), title, description, requiredRole, dueDate, Number(req.userId!), roomId);
-            res.json(task);
+            return (res as any).json(task);
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            return (res as any).status(400).json({ error: error.message });
         }
     },
 
     assignTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { id } = req.params;
-            const { assignedTo, roomId } = req.body;
+            const { id } = getParams(req);
+            const { assignedTo, roomId } = getBody(req);
             const task = await taskService.assignTask(Number(id), assignedTo, Number(req.userId!), roomId);
-            res.json(task);
+            return (res as any).json(task);
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            return (res as any).status(400).json({ error: error.message });
         }
     },
 
     completeTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { id } = req.params;
+            const { id } = getParams(req);
             const task = await taskService.submitTask(Number(id), Number(req.userId!));
-            res.json(task);
+            return (res as any).json(task);
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            return (res as any).status(400).json({ error: error.message });
         }
     },
 
     approveTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { id } = req.params;
-            const { roomId } = req.body;
+            const { id } = getParams(req);
+            const { roomId } = getBody(req);
             const task = await taskService.approveTask(Number(id), Number(req.userId!), roomId);
-            res.json(task);
+            return (res as any).json(task);
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            return (res as any).status(400).json({ error: error.message });
         }
     },
 
     rejectTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { id } = req.params;
-            const { roomId, rejectionNote } = req.body;
+            const { id } = getParams(req);
+            const { roomId, rejectionNote } = getBody(req);
             const task = await taskService.rejectTask(Number(id), Number(req.userId!), roomId, rejectionNote);
-            return res.json(task);
+            return (res as any).json(task);
         } catch (error: any) {
-            return res.status(400).json({ error: error.message });
+            return (res as any).status(400).json({ error: error.message });
         }
     },
 
     deleteTask: async (req: AuthRequest, res: Response) => {
         try {
-            const { id } = req.params;
-            const { roomId } = req.body;
+            const { id } = getParams(req);
+            const { roomId } = getBody(req);
             await taskService.deleteTask(Number(id), Number(req.userId!), roomId ? Number(roomId) : undefined);
-            return res.json({ message: 'Task deleted' });
+            return (res as any).json({ message: 'Task deleted' });
         } catch (error: any) {
-            return res.status(400).json({ error: error.message });
+            return (res as any).status(400).json({ error: error.message });
         }
     },
 
     getTasksByRoom: async (req: AuthRequest, res: Response) => {
         try {
-            const { roomId } = req.params;
+            const { roomId } = getParams(req);
             const tasks = await taskService.getTasksByRoom(Number(roomId));
-            return res.json(tasks);
+            return (res as any).json(tasks);
         } catch (error) {
-            return res.status(500).json({ error: 'Failed to fetch tasks' });
+            return (res as any).status(500).json({ error: 'Failed to fetch tasks' });
         }
     },
 
     getCompletedTasks: async (req: AuthRequest, res: Response) => {
         try {
-            const { roomId } = req.params;
+            const { roomId } = getParams(req);
             const tasks = await taskService.getCompletedTasks(Number(roomId));
-            return res.json(tasks);
+            return (res as any).json(tasks);
         } catch (error) {
-            return res.status(500).json({ error: 'Failed to fetch completed tasks' });
+            return (res as any).status(500).json({ error: 'Failed to fetch completed tasks' });
         }
     },
 
@@ -141,9 +145,9 @@ export const taskController = {
         try {
             const userId = Number(req.userId!);
             const tasks = await taskService.getTasksByAssignee(userId);
-            return res.json(tasks);
+            return (res as any).json(tasks);
         } catch (error) {
-            return res.status(500).json({ error: 'Failed to fetch tasks' });
+            return (res as any).status(500).json({ error: 'Failed to fetch tasks' });
         }
     },
 };
