@@ -13,20 +13,17 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// CORS configuration
-const allowedOrigins = process.env.FRONTEND_URL
-    ? [process.env.FRONTEND_URL, 'https://ops-frontend-amber.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174']
-    : ['https://ops-frontend-amber.vercel.app', 'http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'];
-
+// CORS configuration - Allow all Vercel deployments
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        // Allow all Vercel preview deployments and configured origins
+        // Allow all Vercel deployments and localhost
         if (
-            allowedOrigins.includes(origin) ||
-            origin.endsWith('.vercel.app')
+            origin.endsWith('.vercel.app') ||
+            origin.includes('localhost') ||
+            origin.includes('127.0.0.1')
         ) {
             callback(null, true);
         } else {
@@ -36,6 +33,8 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
 
 // Routes
