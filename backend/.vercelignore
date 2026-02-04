@@ -1,0 +1,14 @@
+# Don't ignore node_modules/.prisma - we need the generated client
+!node_modules/.prisma
+
+# Ignore other node_modules except .prisma
+node_modules/*
+!node_modules/.prisma
+
+# Ignore build artifacts
+dist
+
+# Ignore local env files (use Vercel env vars instead)
+.env
+.env.local
+.env.*.local

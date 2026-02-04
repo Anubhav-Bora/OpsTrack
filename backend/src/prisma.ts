@@ -1,13 +1,22 @@
 // Prisma client instance
 import { Pool } from 'pg';
-
-// Define PrismaClient type locally to avoid import issues during build
-const { PrismaClient } = require('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg');
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
 const adapter = new PrismaPg(pool);
-export const prisma = new PrismaClient({ adapter });
+
+// Use singleton pattern for Prisma Client in serverless
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
