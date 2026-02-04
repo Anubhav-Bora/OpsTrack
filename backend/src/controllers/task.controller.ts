@@ -100,9 +100,9 @@ export const taskController = {
             const { id } = req.params;
             const { roomId, rejectionNote } = req.body;
             const task = await taskService.rejectTask(Number(id), Number(req.userId!), roomId, rejectionNote);
-            res.json(task);
+            return res.json(task);
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            return res.status(400).json({ error: error.message });
         }
     },
 
@@ -111,9 +111,9 @@ export const taskController = {
             const { id } = req.params;
             const { roomId } = req.body;
             await taskService.deleteTask(Number(id), Number(req.userId!), roomId ? Number(roomId) : undefined);
-            res.json({ message: 'Task deleted' });
+            return res.json({ message: 'Task deleted' });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            return res.status(400).json({ error: error.message });
         }
     },
 
@@ -121,9 +121,9 @@ export const taskController = {
         try {
             const { roomId } = req.params;
             const tasks = await taskService.getTasksByRoom(Number(roomId));
-            res.json(tasks);
+            return res.json(tasks);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch tasks' });
+            return res.status(500).json({ error: 'Failed to fetch tasks' });
         }
     },
 
@@ -131,9 +131,9 @@ export const taskController = {
         try {
             const { roomId } = req.params;
             const tasks = await taskService.getCompletedTasks(Number(roomId));
-            res.json(tasks);
+            return res.json(tasks);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch completed tasks' });
+            return res.status(500).json({ error: 'Failed to fetch completed tasks' });
         }
     },
 
