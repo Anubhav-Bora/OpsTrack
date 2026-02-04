@@ -72,7 +72,7 @@ export const userRepo = {
                         role: user.role,
                         createdAt: user.createdAt,
                         stats,
-                        rooms: roomMemberships.map(m => ({
+                        rooms: roomMemberships.map((m: any) => ({
                             id: m.room.id,
                             name: m.room.name,
                             role: m.role,

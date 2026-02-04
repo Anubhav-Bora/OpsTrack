@@ -66,17 +66,17 @@ export const taskService = {
         const task = await taskRepo.getTaskbyId(id);
         if (!task) throw new Error('Task not found');
         if (task.assignedTo !== userId) throw new Error('You can only submit your own tasks');
-        
+
         // Check if all dependencies are completed (APPROVED)
         const dependencies = await taskDependencyRepo.getTaskDependencies(id);
         if (dependencies.length > 0) {
-            const incompleteDeps = dependencies.filter(dep => dep.dependsOn.status !== 'APPROVED');
+            const incompleteDeps = dependencies.filter((dep: any) => dep.dependsOn.status !== 'APPROVED');
             if (incompleteDeps.length > 0) {
-                const incompleteNames = incompleteDeps.map(dep => dep.dependsOn.title).join(', ');
+                const incompleteNames = incompleteDeps.map((dep: any) => dep.dependsOn.title).join(', ');
                 throw new Error(`Cannot submit: The following dependent tasks must be approved first: ${incompleteNames}`);
             }
         }
-        
+
         return await taskRepo.submitTask(id, userId);
     },
 
