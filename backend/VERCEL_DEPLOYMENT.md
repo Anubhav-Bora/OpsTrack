@@ -1,97 +1,77 @@
-# Vercel Deployment Guide for Express + Prisma Backend
+# Vercel Deployment Guide for Prisma
 
-## Overview
-This backend is configured to deploy as a Vercel serverless function with Prisma ORM.
+## Issue Fixed
+The "Cannot find module '.prisma/client/default'" error has been resolved by:
 
-## Key Configuration Files
+1. **Removed custom output path** from Prisma schema - Using default location
+2. **Updated vercel.json** to include Prisma client files in the build
+3. **Updated .vercelignore** to ensure Prisma files are not excluded
+4. **Added binary targets** for Vercel's serverless environment
 
-### 1. `vercel.json`
-- Configures the serverless function entry point (`api/index.ts`)
-- Includes Prisma schema file in the build
-- Sets up routing to direct all requests to the serverless function
-- References environment variables
+## Configuration Changes
 
-### 2. `prisma/schema.prisma`
-- **Important**: Specifies explicit output path for generated client
-- Includes `binaryTargets` for Vercel's runtime environment (RHEL-based)
-- Binary targets: `["native", "rhel-openssl-3.0.x"]`
+### 1. prisma/schema.prisma
+- Removed custom `output` path (now uses default: `node_modules/.prisma/client`)
+- Added `debian-openssl-3.0.x` binary target for Vercel compatibility
 
-### 3. `.vercelignore`
-- Ensures `node_modules/.prisma` is NOT ignored
-- The generated Prisma client must be included in the deployment
+### 2. vercel.json
+- Added `node_modules/.prisma/**` to includeFiles
+- Added `node_modules/@prisma/client/**` to includeFiles
 
-### 4. `package.json`
-- `postinstall`: Runs `prisma generate` after dependencies install
-- `vercel-build`: Custom build script that generates Prisma client and runs migrations
+### 3. .vercelignore
+- Explicitly includes `node_modules/.prisma/**`
+- Explicitly includes `node_modules/@prisma/client/**`
 
-## Environment Variables
-
-Set these in your Vercel project settings:
-
-```
-DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
-JWT_SECRET=your-jwt-secret
-NODE_ENV=production
-```
+### 4. package.json
+- `@prisma/client` is in dependencies (not devDependencies) ✓
+- `postinstall` script runs `prisma generate` ✓
+- `vercel-build` script generates Prisma client ✓
 
 ## Deployment Steps
 
-1. **Connect Repository to Vercel**
-   - Import your repository in Vercel dashboard
-   - Set root directory to `backend/`
+1. **Commit all changes:**
+   ```bash
+   git add .
+   git commit -m "fix: Prisma client generation for Vercel serverless"
+   git push origin release-branch
+   ```
 
-2. **Configure Environment Variables**
-   - Add all required environment variables in Vercel project settings
-   - Ensure `DATABASE_URL` includes `?sslmode=require` for secure connections
+2. **Vercel Environment Variables:**
+   Ensure these are set in Vercel dashboard:
+   - `DATABASE_URL` - Your PostgreSQL connection string
+   - `JWT_SECRET` - Your JWT secret key
+   - `NODE_ENV` - Set to "production"
 
-3. **Deploy**
-   - Push to your connected branch (e.g., `release-branch`)
-   - Vercel will automatically:
-     - Install dependencies
-     - Run `prisma generate` (via postinstall)
-     - Run `vercel-build` script
-     - Deploy the serverless function
+3. **Deploy:**
+   - Vercel will automatically run `vercel-build` script
+   - This generates the Prisma client
+   - The generated files are included in the serverless function
+
+## Verification
+
+After deployment, check:
+1. Vercel build logs show "Prisma client generated successfully"
+2. API endpoints respond correctly
+3. Database queries work without errors
 
 ## Troubleshooting
 
-### "Cannot find module '.prisma/client/default'" Error
+If you still see the error:
+1. Check Vercel build logs for Prisma generation errors
+2. Verify DATABASE_URL is set correctly
+3. Ensure the database is accessible from Vercel
+4. Try redeploying with `vercel --prod --force`
 
-This error occurs when the Prisma client isn't properly generated or included. Fixed by:
-- ✅ Explicit output path in `schema.prisma`
-- ✅ Correct binary targets for Vercel runtime
-- ✅ `.vercelignore` includes generated client
-- ✅ `vercel-build` script generates client
+## Binary Targets
 
-### Database Connection Issues
+The schema includes these binary targets:
+- `native` - For local development
+- `rhel-openssl-3.0.x` - For RHEL-based systems
+- `debian-openssl-3.0.x` - For Vercel's Debian-based serverless functions
 
-- Ensure `DATABASE_URL` is set in Vercel environment variables
-- Use connection pooling (we use `pg` Pool with Prisma adapter)
-- Include `?sslmode=require` in connection string for production databases
+## Important Notes
 
-### Migration Issues
-
-- Migrations run during `vercel-build` via `prisma migrate deploy`
-- For production, ensure migrations are tested in staging first
-- Consider running migrations separately if needed
-
-## Local Development
-
-```bash
-# Install dependencies
-pnpm install
-
-# Generate Prisma client
-pnpm prisma:generate
-
-# Run migrations
-pnpm prisma migrate dev
-
-# Start development server
-pnpm dev
-```
-
-## Architecture Notes
-
-- **Singleton Pattern**: Prisma client uses singleton pattern to prevent connection exhaustion in serverless
-- **Connection Pooling**: Uses `@prisma/adapter-pg` with `pg` Pool for efficient connection management
-- **Serverless Entry**: `api/index.ts` exports the Express app for Vercel's serverless runtime
+- Never commit `node_modules/` to git
+- The Prisma client is generated during build time on Vercel
+- The `.vercelignore` ensures generated files are included in the deployment
+- Database migrations should be run separately (not in vercel-build for production)
