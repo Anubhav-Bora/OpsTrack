@@ -34,12 +34,26 @@ app.get('/api', (req: any, res: any) => {
     res.json({ status: 'OK', message: 'OpsTrack API is running', version: '1.0.0' });
 });
 
+// Root route for base path
+app.get('/', (req: any, res: any) => {
+    res.json({ status: 'OK', message: 'OpsTrack API is running', version: '1.0.0', endpoints: '/api' });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/room-members', roomMemberRoutes);
 app.use('/api/task-dependencies', taskDependencyRoutes);
+
+// 404 handler for undefined routes
+app.use((req: any, res: any) => {
+    res.status(404).json({
+        error: 'Not Found',
+        message: `Route ${req.method} ${req.path} not found`,
+        availableEndpoints: ['/api', '/api/health', '/api/auth', '/api/users', '/api/tasks', '/api/rooms', '/api/room-members', '/api/task-dependencies']
+    });
+});
 
 // Error handling middleware
 app.use(errorMiddleware);
