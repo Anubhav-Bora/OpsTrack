@@ -7,9 +7,6 @@ export const userRepo = {
             include: {
                 tasks: true,
                 roomsCreated: true,
-                roomMemberships: {
-                    include: { room: true },
-                },
             },
         }),
 
@@ -20,9 +17,6 @@ export const userRepo = {
             include: {
                 tasks: true,
                 roomsCreated: true,
-                roomMemberships: {
-                    include: { room: true },
-                },
             },
         }),
 
@@ -35,87 +29,112 @@ export const userRepo = {
     // Get all users with task statistics (for admin)
     getAllUsersWithStats: async () => {
         try {
-            const users = await prisma.user.findMany({
-                include: {
-                    tasks: {
-                        select: {
-                            id: true,
-                            status: true,
-                        },
-                    },
-                    roomMemberships: {
+            // Get all users
+            const users = await prisma.user.findMany();
+
+            if (users.length === 0) {
+                return [];
+            }
+
+            // For each user, get their tasks and room memberships
+            const result = [];
+            for (const user of users) {
+                try {
+                    // Get tasks assigned to this user
+                    const tasks = await prisma.task.findMany({
+                        where: { assignedTo: user.id },
+                    });
+
+                    // Get room memberships
+                    const roomMemberships = await prisma.roomMember.findMany({
+                        where: { userId: user.id },
                         include: {
                             room: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                },
-                            },
-                        },
-                    },
-                },
-            });
+                                select: { id: true, name: true }
+                            }
+                        }
+                    });
 
-            return users.map(user => ({
-                id: user.id.toString(),
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                createdAt: user.createdAt,
-                stats: {
-                    totalTasks: user.tasks?.length || 0,
-                    pendingTasks: user.tasks?.filter(t => t.status === 'PENDING').length || 0,
-                    inProgressTasks: user.tasks?.filter(t => t.status === 'IN_PROGRESS').length || 0,
-                    submittedTasks: user.tasks?.filter(t => t.status === 'SUBMITTED').length || 0,
-                    completedTasks: user.tasks?.filter(t => t.status === 'APPROVED').length || 0,
-                    rejectedTasks: user.tasks?.filter(t => t.status === 'REJECTED').length || 0,
-                },
-                rooms: user.roomMemberships?.map(m => ({
-                    id: m.room.id.toString(),
-                    name: m.room.name,
-                    role: m.role,
-                })) || [],
-            }));
+                    // Calculate stats
+                    const stats = {
+                        totalTasks: tasks.length,
+                        pendingTasks: tasks.filter(t => t.status === 'PENDING').length,
+                        inProgressTasks: tasks.filter(t => t.status === 'IN_PROGRESS').length,
+                        submittedTasks: tasks.filter(t => t.status === 'SUBMITTED').length,
+                        completedTasks: tasks.filter(t => t.status === 'APPROVED').length,
+                        rejectedTasks: tasks.filter(t => t.status === 'REJECTED').length,
+                    };
+
+                    result.push({
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        createdAt: user.createdAt,
+                        stats,
+                        rooms: roomMemberships.map(m => ({
+                            id: m.room.id,
+                            name: m.room.name,
+                            role: m.role,
+                        })),
+                    });
+                } catch (userError) {
+                    throw userError;
+                }
+            }
+
+            return result;
         } catch (error) {
-            console.error('getAllUsersWithStats repository error:', error);
             throw error;
         }
     },
 
     // Get users with stats for a specific room (for leader)
     getUsersWithStatsByRoomId: async (roomId: number) => {
-        const roomMembers = await prisma.roomMember.findMany({
-            where: { roomId },
-            include: {
-                user: {
-                    include: {
-                        tasks: {
-                            where: { roomId },
-                            select: {
-                                id: true,
-                                status: true,
-                            },
-                        },
-                    },
+        try {
+            const roomMembers = await prisma.roomMember.findMany({
+                where: { roomId },
+                include: {
+                    user: true,
                 },
-            },
-        });
+            });
 
-        return roomMembers.map(member => ({
-            id: member.user.id.toString(),
-            name: member.user.name,
-            email: member.user.email,
-            role: member.user.role,
-            roomRole: member.role,
-            createdAt: member.user.createdAt,
-            stats: {
-                totalTasks: member.user.tasks.length,
-                pendingTasks: member.user.tasks.filter(t => t.status === 'PENDING').length,
-                inProgressTasks: member.user.tasks.filter(t => t.status === 'IN_PROGRESS').length,
-                submittedTasks: member.user.tasks.filter(t => t.status === 'SUBMITTED').length,
-                completedTasks: member.user.tasks.filter(t => t.status === 'APPROVED').length,
-                rejectedTasks: member.user.tasks.filter(t => t.status === 'REJECTED').length,
-            },
-        }));
+            const result = [];
+            for (const member of roomMembers) {
+                try {
+                    const tasks = await prisma.task.findMany({
+                        where: {
+                            assignedTo: member.userId,
+                            roomId
+                        },
+                    });
+
+                    const stats = {
+                        totalTasks: tasks.length,
+                        pendingTasks: tasks.filter(t => t.status === 'PENDING').length,
+                        inProgressTasks: tasks.filter(t => t.status === 'IN_PROGRESS').length,
+                        submittedTasks: tasks.filter(t => t.status === 'SUBMITTED').length,
+                        completedTasks: tasks.filter(t => t.status === 'APPROVED').length,
+                        rejectedTasks: tasks.filter(t => t.status === 'REJECTED').length,
+                    };
+
+                    result.push({
+                        id: member.user.id,
+                        name: member.user.name,
+                        email: member.user.email,
+                        role: member.user.role,
+                        roomRole: member.role,
+                        createdAt: member.user.createdAt,
+                        stats,
+                    });
+                } catch (memberError) {
+                    throw memberError;
+                }
+            }
+
+            return result;
+        } catch (error) {
+            throw error;
+        }
     },
 };

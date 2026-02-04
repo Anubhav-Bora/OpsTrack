@@ -23,7 +23,7 @@ import { useUpdateMemberRole, useRemoveMember } from "@/hooks/useMemberManagemen
 import { useAddMember, useAllUsers } from "@/hooks/useAddMember";
 import { useDeleteRoom } from "@/hooks/useRooms";
 import { useRoomUsersWithStats } from "@/hooks/useUserStats";
-import {  Task,  TaskStatus, CreateTaskInput } from "@/types";
+import { Task, TaskStatus, CreateTaskInput } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
 export default function RoomDetail() {
@@ -45,7 +45,7 @@ export default function RoomDetail() {
   const { data: room, isLoading: roomLoading } = useRoomDetail(Number(roomId));
   const { data: tasks = [], } = useRoomTasks(Number(roomId));
   const { data: members = [] } = useRoomMembers(Number(roomId));
-  const { data: allUsers = [] } = useAllUsers();
+  const { data: allUsers = [], isLoading: isLoadingAllUsers } = useAllUsers();
   const { mutate: createTask, isPending: isCreatingTask } = useCreateTask();
   const { mutate: approveTask } = useApproveTask();
   const { mutate: rejectTask } = useRejectTask();
@@ -58,7 +58,7 @@ export default function RoomDetail() {
   const { mutate: removeMember } = useRemoveMember();
   const { mutate: addMember, isPending: isAddingMember } = useAddMember();
   const { mutate: addTaskDependency } = useAddTaskDependency();
-  
+
   // Fetch room users with stats (for leader/admin)
   const { data: roomUsersWithStats = [], isLoading: isLoadingUserStats } = useRoomUsersWithStats(roomId);
 
@@ -147,7 +147,7 @@ export default function RoomDetail() {
   const handleCreateTask = (data: CreateTaskInput) => {
     // Capture dependencies before async to avoid closure issues
     const depsToAdd = [...pendingDependencies];
-    
+
     createTask({ ...data, roomId: room?.id || "" }, {
       onSuccess: (createdTask: any) => {
         // Add dependencies after task is created
@@ -467,6 +467,7 @@ export default function RoomDetail() {
         availableUsers={allUsers}
         currentMembers={members.map(m => m.userId)}
         isLoading={isAddingMember}
+        isLoadingUsers={isLoadingAllUsers}
         onAddMembers={handleAddMembers}
       />
 

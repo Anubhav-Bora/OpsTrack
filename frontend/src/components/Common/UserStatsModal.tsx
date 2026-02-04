@@ -1,10 +1,7 @@
 import * as React from "react";
-import { X, Users, CheckCircle, Clock, AlertTriangle, XCircle, Send, ListTodo } from "lucide-react";
+import { X, Users, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge, getRoleVariant } from "@/components/Common/Badge";
 import { UserWithStats } from "@/types";
-import { ROLE_LABELS } from "@/utils/constants";
-import { cn } from "@/lib/utils";
 
 interface UserStatsModalProps {
   isOpen: boolean;
@@ -55,17 +52,12 @@ export function UserStatsModal({ isOpen, onClose, users, isLoading, title, subti
       <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-4xl mx-4 rounded-xl bg-card border shadow-elevated animate-scale-in max-h-[90vh] overflow-hidden flex flex-col pointer-events-auto">
+      <div className="relative w-full max-w-3xl mx-4 rounded-xl bg-card border shadow-elevated max-h-[90vh] overflow-hidden flex flex-col pointer-events-auto">
         {/* Header */}
         <div className="flex items-start justify-between border-b p-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-2">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-              {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-            </div>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
@@ -81,138 +73,114 @@ export function UserStatsModal({ isOpen, onClose, users, isLoading, title, subti
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search users by name, email, or role..."
+            placeholder="Search users..."
             className="w-full rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="rounded-lg border bg-card p-4 animate-pulse">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-muted" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-1/3 bg-muted rounded" />
-                      <div className="h-3 w-1/4 bg-muted rounded" />
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-center py-12">
+              <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground">No users found</h3>
+              <Users className="h-10 w-10 text-muted-foreground/50 mb-3" />
               <p className="text-sm text-muted-foreground">
-                {searchQuery ? "Try adjusting your search." : "No users available."}
+                {searchQuery ? "No users match your search" : "No users available"}
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredUsers.map((user) => (
-                <UserStatsCard key={user.id} user={user} />
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">
+                      User
+                    </th>
+                    <th className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">
+                      Tasks
+                    </th>
+                    <th className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">
+                      Done
+                    </th>
+                    <th className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3">
+                      Progress
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user) => (
+                    <UserTableRow key={user.id} user={user} />
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="border-t p-4 bg-secondary/30">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredUsers.length} of {users.length} users
-            </p>
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-          </div>
+        <div className="border-t p-4 bg-muted/30 flex justify-between items-center">
+          <p className="text-xs text-muted-foreground">
+            {filteredUsers.length} of {users.length} members
+          </p>
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Close
+          </Button>
         </div>
       </div>
     </div>
   );
 }
 
-function UserStatsCard({ user }: { user: UserWithStats }) {
-  const stats = [
-    { label: "Total", value: user.stats.totalTasks, icon: ListTodo, color: "text-foreground" },
-    { label: "Pending", value: user.stats.pendingTasks, icon: Clock, color: "text-warning" },
-    { label: "In Progress", value: user.stats.inProgressTasks, icon: AlertTriangle, color: "text-info" },
-    { label: "Submitted", value: user.stats.submittedTasks, icon: Send, color: "text-primary" },
-    { label: "Completed", value: user.stats.completedTasks, icon: CheckCircle, color: "text-success" },
-    { label: "Rejected", value: user.stats.rejectedTasks, icon: XCircle, color: "text-destructive" },
-  ];
-
+function UserTableRow({ user }: { user: UserWithStats }) {
   const completionRate = user.stats.totalTasks > 0
     ? Math.round((user.stats.completedTasks / user.stats.totalTasks) * 100)
     : 0;
 
   return (
-    <div className="rounded-xl border bg-card p-4 transition-all hover:shadow-soft">
-      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        {/* User Info */}
-        <div className="flex items-center gap-4 lg:w-1/3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 text-lg font-bold text-primary">
-            {user.name.charAt(0)}
+    <tr className="border-b hover:bg-muted/30 transition-colors">
+      {/* User Info */}
+      <td className="px-4 py-4">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+            {user.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <h3 className="font-semibold text-foreground truncate">{user.name}</h3>
-            <p className="text-sm text-muted-foreground truncate">{user.email || "No email"}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant={getRoleVariant(user.role)} size="sm">
-                {ROLE_LABELS[user.role] || user.role}
-              </Badge>
-              {user.roomRole && (
-                <Badge variant={user.roomRole === "LEADER" || user.roomRole === "ADMIN" ? "warning" : "default"} size="sm">
-                  {user.roomRole}
-                </Badge>
-              )}
-            </div>
+            <p className="font-medium text-foreground text-sm truncate">{user.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
           </div>
         </div>
+      </td>
 
-        {/* Stats Grid */}
-        <div className="flex-1 grid grid-cols-3 lg:grid-cols-6 gap-2">
-          {stats.map((stat) => (
+      {/* Tasks */}
+      <td className="px-4 py-4 text-center">
+        <span className="font-medium text-sm">{user.stats.totalTasks}</span>
+      </td>
+
+      {/* Completed */}
+      <td className="px-4 py-4 text-center">
+        <span className="inline-flex items-center gap-1.5 font-medium text-sm">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          {user.stats.completedTasks}
+        </span>
+      </td>
+
+      {/* Progress Bar */}
+      <td className="px-4 py-4">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-20 rounded-full bg-muted overflow-hidden">
             <div
-              key={stat.label}
-              className="flex flex-col items-center p-2 rounded-lg bg-secondary/50"
-            >
-              <stat.icon className={cn("h-4 w-4 mb-1", stat.color)} />
-              <span className="text-lg font-semibold text-foreground">{stat.value}</span>
-              <span className="text-xs text-muted-foreground">{stat.label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Completion Rate */}
-        <div className="lg:w-24 flex flex-col items-center justify-center p-3 rounded-lg bg-success/10">
-          <span className="text-2xl font-bold text-success">{completionRate}%</span>
-          <span className="text-xs text-muted-foreground">Completed</span>
-        </div>
-      </div>
-
-      {/* Rooms (for admin view) */}
-      {user.rooms && user.rooms.length > 0 && (
-        <div className="mt-3 pt-3 border-t">
-          <p className="text-xs text-muted-foreground mb-2">Rooms:</p>
-          <div className="flex flex-wrap gap-2">
-            {user.rooms.map((room) => (
-              <span
-                key={room.id}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-xs"
-              >
-                {room.name}
-                <Badge variant={room.role === "LEADER" || room.role === "ADMIN" ? "warning" : "default"} size="sm">
-                  {room.role}
-                </Badge>
-              </span>
-            ))}
+              className="h-full bg-emerald-600 dark:bg-emerald-400 transition-all"
+              style={{ width: `${completionRate}%` }}
+            />
           </div>
+          <span className="text-xs font-medium text-muted-foreground min-w-[2rem]">
+            {completionRate}%
+          </span>
         </div>
-      )}
-    </div>
+      </td>
+    </tr>
   );
 }

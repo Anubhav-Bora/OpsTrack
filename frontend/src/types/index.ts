@@ -115,7 +115,7 @@ export interface UserStats {
 }
 
 export interface UserWithStats {
-  id: string;
+  id: string | number;
   name: string;
   email: string | null;
   role: UserRole;
@@ -123,7 +123,7 @@ export interface UserWithStats {
   createdAt: string;
   stats: UserStats;
   rooms?: {
-    id: string;
+    id: string | number;
     name: string;
     role: RoomRole;
   }[];

@@ -23,6 +23,7 @@ interface AddMemberModalProps {
   currentMembers: string[]; // userId list
   isLoading?: boolean;
   onAddMembers: (userIds: string[]) => void;
+  isLoadingUsers?: boolean;
 }
 
 export function AddMemberModal({
@@ -32,15 +33,18 @@ export function AddMemberModal({
   currentMembers,
   isLoading,
   onAddMembers,
+  isLoadingUsers,
 }: AddMemberModalProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredUsers = availableUsers.filter(
-    (user) =>
-      !currentMembers.includes(user.id) &&
-      (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()))
+    (user) => {
+      const isNotMember = !currentMembers.includes(user.id);
+      const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      return isNotMember && matchesSearch;
+    }
   );
 
   const handleToggleUser = (userId: string) => {
@@ -79,7 +83,11 @@ export function AddMemberModal({
           </div>
 
           <ScrollArea className="h-[300px] rounded-md border p-4">
-            {filteredUsers.length === 0 ? (
+            {isLoadingUsers ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                Loading users...
+              </div>
+            ) : filteredUsers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 {availableUsers.length === 0
                   ? "No users available"

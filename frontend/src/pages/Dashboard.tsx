@@ -5,14 +5,11 @@ import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
 import { RoomCard, RoomCardSkeleton } from "@/components/Room/RoomCard";
 import { RoomForm } from "@/components/Room/RoomForm";
-import { UserStatsModal } from "@/components/Common/UserStatsModal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { EmptyState } from "@/components/Common/EmptyState";
 import { useRooms, useCreateRoom } from "@/hooks/useRooms";
-import { useAllUsersWithStats } from "@/hooks/useUserStats";
 import { CreateRoomInput } from "@/types";
-import { useAppSelector } from "@/store/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +17,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showCreateRoom, setShowCreateRoom] = useState(false);
-  const [showUserStats, setShowUserStats] = useState(false);
 
   // Get user from AuthContext (which is synced with localStorage)
   const authContext = useAuth();
@@ -30,9 +26,6 @@ export default function Dashboard() {
   // Fetch rooms with polling
   const { data: rooms = [], isLoading } = useRooms();
   const { mutate: createRoom, isPending: isCreating } = useCreateRoom();
-  
-  // Fetch all users with stats (for admin)
-  const { data: allUsersWithStats = [], isLoading: isLoadingUsers } = useAllUsersWithStats();
 
   const handleCreateRoom = (data: CreateRoomInput) => {
     createRoom(data, {
@@ -116,10 +109,10 @@ export default function Dashboard() {
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                onClick={() => setShowUserStats(true)}
+                onClick={() => navigate("/admin/users")}
               >
                 <Users className="h-4 w-4 mr-2" />
-                View All Users
+                All Users
               </Button>
               <Button
                 onClick={() => setShowCreateRoom(true)}
@@ -234,18 +227,6 @@ export default function Dashboard() {
         onSubmit={handleCreateRoom}
         isLoading={isCreating}
       />
-
-      {/* User Stats Modal (for Admin) */}
-      {isAdminOrLeader && (
-        <UserStatsModal
-          isOpen={showUserStats}
-          onClose={() => setShowUserStats(false)}
-          users={allUsersWithStats}
-          isLoading={isLoadingUsers}
-          title="All Users"
-          subtitle="View all users and their task statistics"
-        />
-      )}
     </Layout>
   );
 }

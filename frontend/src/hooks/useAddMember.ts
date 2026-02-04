@@ -45,17 +45,23 @@ export function useAvailableUsers(roomId: number) {
 export function useAllUsers() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const query = useQuery({
+  return useQuery({
     queryKey: ['all-users'],
-    queryFn: () => get<User[]>('/users'),
+    queryFn: async () => {
+      try {
+        const response = await get<any[]>('/users');
+        // Transform the response to match User type
+        return response.map(user => ({
+          id: String(user.id),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        }));
+      } catch (error) {
+        throw error;
+      }
+    },
     enabled: isAuthenticated && !authLoading,
   });
-
-  React.useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      query.refetch();
-    }
-  }, [isAuthenticated, authLoading, query]);
-
-  return query;
 }

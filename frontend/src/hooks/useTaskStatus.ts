@@ -9,6 +9,7 @@ export function useUpdateTaskStatus() {
             put<Task>(`/tasks/${taskId}/status`, { status }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['users', 'stats'] });
         },
     });
 }
@@ -19,6 +20,7 @@ export function useAssignTask() {
             put<Task>(`/tasks/${taskId}/assign`, { assignedTo: Number(assigneeId), roomId: Number(roomId) }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['users', 'stats'] });
         },
     });
 }
@@ -29,6 +31,7 @@ export function useSubmitTask() {
             put<Task>(`/tasks/${taskId}/submit`, {}),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['users', 'stats'] });
         },
     });
 }

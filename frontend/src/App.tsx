@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import RoomDetail from "@/pages/RoomDetail";
 import MyTasks from "@/pages/MyTasks";
 import Approvals from "@/pages/Approvals";
+import AdminUsers from "@/pages/AdminUsers";
 import NotFound from "@/pages/NotFound";
 
 const App = () => (
@@ -53,6 +54,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Approvals />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute>
+                  <AdminUsers />
                 </ProtectedRoute>
               }
             />
