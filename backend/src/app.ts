@@ -30,6 +30,10 @@ app.get('/api/health', (req: any, res: any) => {
     res.json({ status: 'OK', message: 'Backend is running' });
 });
 
+app.get('/api', (req: any, res: any) => {
+    res.json({ status: 'OK', message: 'OpsTrack API is running', version: '1.0.0' });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
