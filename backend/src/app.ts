@@ -13,29 +13,30 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// CORS configuration - Allow all Vercel deployments
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
+// Manual CORS headers for Vercel serverless compatibility
+app.use((req: any, res: any, next: any) => {
+    const origin = req.headers.origin;
 
-        // Allow all Vercel deployments and localhost
-        if (
-            origin.endsWith('.vercel.app') ||
-            origin.includes('localhost') ||
-            origin.includes('127.0.0.1')
-        ) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204
-}));
+    // Allow all Vercel deployments and localhost
+    if (origin && (
+        origin.endsWith('.vercel.app') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+    )) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        res.status(204).end();
+        return;
+    }
+
+    next();
+});
 
 // Routes
 app.get('/api/health', (req: any, res: any) => {
