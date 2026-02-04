@@ -1,5 +1,7 @@
 import { prisma } from '../prisma'
-import { TaskStatus, UserRole } from '@prisma/client'
+
+type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'BLOCKED';
+type UserRole = 'ADMIN' | 'BACKEND' | 'FRONTEND' | 'DEVOPS' | 'CYBERSECURITY';
 
 export const taskRepo = {
     //create new task

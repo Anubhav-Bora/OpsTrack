@@ -48,13 +48,13 @@ export const roomRepo = {
 
     // Delete room
     deleteRoom: (id: number) =>
-        prisma.$transaction(async (tx) => {
+        prisma.$transaction(async (tx: any) => {
             // Get all task IDs in this room
             const tasksInRoom = await tx.task.findMany({
                 where: { roomId: id },
                 select: { id: true },
             });
-            const taskIds = tasksInRoom.map(t => t.id);
+            const taskIds = tasksInRoom.map((t: any) => t.id);
 
             // Delete all task dependencies where any side involves a task from this room
             if (taskIds.length > 0) {

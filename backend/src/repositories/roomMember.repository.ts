@@ -1,5 +1,6 @@
 import { prisma } from '../prisma';
-import { RoomRole } from '@prisma/client';
+
+type RoomRole = 'LEADER' | 'ADMIN' | 'MEMBER';
 
 export const roomMemberRepo = {
     // Get all room members

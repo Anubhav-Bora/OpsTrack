@@ -58,11 +58,11 @@ export const userRepo = {
                     // Calculate stats
                     const stats = {
                         totalTasks: tasks.length,
-                        pendingTasks: tasks.filter(t => t.status === 'PENDING').length,
-                        inProgressTasks: tasks.filter(t => t.status === 'IN_PROGRESS').length,
-                        submittedTasks: tasks.filter(t => t.status === 'SUBMITTED').length,
-                        completedTasks: tasks.filter(t => t.status === 'APPROVED').length,
-                        rejectedTasks: tasks.filter(t => t.status === 'REJECTED').length,
+                        pendingTasks: tasks.filter((t: any) => t.status === 'PENDING').length,
+                        inProgressTasks: tasks.filter((t: any) => t.status === 'IN_PROGRESS').length,
+                        submittedTasks: tasks.filter((t: any) => t.status === 'SUBMITTED').length,
+                        completedTasks: tasks.filter((t: any) => t.status === 'APPROVED').length,
+                        rejectedTasks: tasks.filter((t: any) => t.status === 'REJECTED').length,
                     };
 
                     result.push({
@@ -111,11 +111,11 @@ export const userRepo = {
 
                     const stats = {
                         totalTasks: tasks.length,
-                        pendingTasks: tasks.filter(t => t.status === 'PENDING').length,
-                        inProgressTasks: tasks.filter(t => t.status === 'IN_PROGRESS').length,
-                        submittedTasks: tasks.filter(t => t.status === 'SUBMITTED').length,
-                        completedTasks: tasks.filter(t => t.status === 'APPROVED').length,
-                        rejectedTasks: tasks.filter(t => t.status === 'REJECTED').length,
+                        pendingTasks: tasks.filter((t: any) => t.status === 'PENDING').length,
+                        inProgressTasks: tasks.filter((t: any) => t.status === 'IN_PROGRESS').length,
+                        submittedTasks: tasks.filter((t: any) => t.status === 'SUBMITTED').length,
+                        completedTasks: tasks.filter((t: any) => t.status === 'APPROVED').length,
+                        rejectedTasks: tasks.filter((t: any) => t.status === 'REJECTED').length,
                     };
 
                     result.push({
