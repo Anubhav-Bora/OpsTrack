@@ -141,9 +141,9 @@ export const taskController = {
         try {
             const userId = Number(req.userId!);
             const tasks = await taskService.getTasksByAssignee(userId);
-            res.json(tasks);
+            return res.json(tasks);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to fetch tasks' });
+            return res.status(500).json({ error: 'Failed to fetch tasks' });
         }
     },
 };
