@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, Link2 } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
 import { TaskList } from "@/components/Task/TaskList";
@@ -13,6 +13,68 @@ import { useTaskDependencies } from "@/hooks/useTaskDependencies";
 import { useTasks } from "@/hooks/useTasks";
 import { Task, TaskStatus } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
+
+// Helper component to show task dependencies info
+function TaskDependencyDisplay({ task, allTasks }: { task: Task; allTasks: Task[] }) {
+  const { data: dependencies = [] } = useTaskDependencies(task.id);
+  
+  if (dependencies.length === 0) return null;
+
+  const incompleteDeps = dependencies.filter(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.status !== "APPROVED";
+  });
+
+  // Get dependency task names
+  const depTaskNames = incompleteDeps.map(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.title || `Task ${dep.dependsOnTaskId}`;
+  });
+
+  if (incompleteDeps.length === 0) {
+    return (
+      <div className="flex items-center gap-1.5 text-success text-xs">
+        <Link2 className="h-3.5 w-3.5" />
+        <span>Dependencies complete</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 text-warning text-xs">
+      <Link2 className="h-3.5 w-3.5" />
+      <span className="truncate" title={`Blocked by: ${depTaskNames.join(', ')}`}>
+        Blocked by: {depTaskNames.slice(0, 2).join(', ')}{depTaskNames.length > 2 ? ` +${depTaskNames.length - 2} more` : ''}
+      </span>
+    </div>
+  );
+}
+
+// Helper component to check if task can be started
+function TaskStartButton({ task, allTasks, onStart }: { 
+  task: Task; 
+  allTasks: Task[];
+  onStart: (task: Task) => void; 
+}) {
+  const { data: dependencies = [] } = useTaskDependencies(task.id);
+  
+  const allDependenciesCompleted = dependencies.length === 0 || dependencies.every(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.status === "APPROVED";
+  });
+
+  return (
+    <Button 
+      size="sm" 
+      variant="outline"
+      onClick={() => onStart(task)}
+      disabled={!allDependenciesCompleted}
+      title={!allDependenciesCompleted ? "Cannot start: pending dependencies must be approved first" : "Start working on this task"}
+    >
+      Start
+    </Button>
+  );
+}
 
 // Helper component to check if task can be submitted
 function TaskSubmitButton({ task, allTasks, onSubmit }: { 
@@ -34,7 +96,7 @@ function TaskSubmitButton({ task, allTasks, onSubmit }: {
       size="sm" 
       onClick={() => onSubmit(task)}
       disabled={!canSubmit}
-      title={!canSubmit ? "Cannot submit: pending dependencies" : "Submit for approval"}
+      title={!canSubmit ? "Cannot submit: pending dependencies must be approved first" : "Submit for approval"}
     >
       Submit
     </Button>
@@ -183,7 +245,7 @@ export default function MyTasks() {
                         {task.description}
                       </p>
                     )}
-                    <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                       <span className="capitalize">
                         Status: {TASK_STATUS_LABELS[task.status]}
                       </span>
@@ -196,15 +258,18 @@ export default function MyTasks() {
                           })}
                         </span>
                       )}
+                      <TaskDependencyDisplay task={task} allTasks={allTasks} />
                     </div>
                   </div>
 
                   {/* Quick Actions */}
                   <div className="flex items-center gap-2">
                     {task.status === "PENDING" && (
-                      <Button size="sm" variant="outline" onClick={() => handleQuickStart(task)}>
-                        Start
-                      </Button>
+                      <TaskStartButton 
+                        task={task}
+                        allTasks={allTasks}
+                        onStart={handleQuickStart}
+                      />
                     )}
                     {(task.status === "PENDING" ||
                       task.status === "IN_PROGRESS" ||

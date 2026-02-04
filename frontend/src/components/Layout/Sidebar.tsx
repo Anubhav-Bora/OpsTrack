@@ -18,6 +18,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Badge, getRoleVariant } from "@/components/Common/Badge";
 import { ROLE_LABELS } from "@/utils/constants";
 import { useSubmittedTasks } from "@/hooks/useApprovals";
+import { useMyTasks } from "@/hooks/useMyTasks";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -35,6 +36,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { data: submittedTasks = [] } = useSubmittedTasks();
+  const { data: myTasks = [] } = useMyTasks();
 
   const hasApprovalAccess = React.useMemo(() => {
     if (!user) return false;
@@ -89,7 +91,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <nav className="flex-1 space-y-1.5 p-3">
           {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.path;
-            const pendingCount = item.path === "/approvals" ? submittedTasks.length : 0;
+            const pendingCount = item.path === "/approvals" ? submittedTasks.length : 
+                                item.path === "/my-tasks" ? myTasks.length : 0;
             return (
               <NavLink
                 key={item.path}
@@ -109,7 +112,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     : "bg-sidebar-accent text-sidebar-muted group-hover:bg-sidebar-primary/20 group-hover:text-sidebar-foreground"
                 )}>
                   <item.icon className="h-4 w-4" />
-                  {pendingCount > 0 && (
+                  {pendingCount > 0 && isCollapsed && (
                     <div className="absolute -top-2 -right-2 bg-destructive text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {pendingCount > 9 ? "9+" : pendingCount}
                     </div>

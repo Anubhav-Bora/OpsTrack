@@ -66,13 +66,8 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
     const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
     return depTask?.status === "APPROVED";
   });
-
-  const canSubmit = isAssignedToMe && 
-    (task.status === "PENDING" || task.status === "IN_PROGRESS" || task.status === "REJECTED") &&
-    allDependenciesCompleted;
   
   const canApprove = canApproveInRoom && task.status === "SUBMITTED";
-  const canStartProgress = isAssignedToMe && task.status === "PENDING" && allDependenciesCompleted;
 
   const handleReject = (rejectionNote: string) => {
     if (onStatusChange) {
@@ -264,16 +259,24 @@ export function TaskModal({ task, isOpen, onClose, onStatusChange, onEdit, onDel
             )}
           </div>
           <div className="flex justify-end gap-3">
-            {canStartProgress && onStatusChange && (
+            {/* Show Start Progress button (disabled if dependencies not complete) */}
+            {isAssignedToMe && task.status === "PENDING" && onStatusChange && (
               <Button
                 variant="outline"
                 onClick={() => onStatusChange?.(task.id, "IN_PROGRESS")}
+                disabled={!allDependenciesCompleted}
+                title={!allDependenciesCompleted ? "Complete all dependencies first" : undefined}
               >
                 Start Progress
               </Button>
             )}
-            {canSubmit && onStatusChange && (
-              <Button onClick={() => onStatusChange?.(task.id, "SUBMITTED")}>
+            {/* Show Submit button (disabled if dependencies not complete) */}
+            {isAssignedToMe && (task.status === "PENDING" || task.status === "IN_PROGRESS" || task.status === "REJECTED") && onStatusChange && (
+              <Button 
+                onClick={() => onStatusChange?.(task.id, "SUBMITTED")}
+                disabled={!allDependenciesCompleted}
+                title={!allDependenciesCompleted ? "Complete all dependencies first" : undefined}
+              >
                 Submit for Approval
               </Button>
             )}

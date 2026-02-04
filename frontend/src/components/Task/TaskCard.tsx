@@ -25,20 +25,35 @@ function TaskDependencyInfo({ task, allTasks }: { task: Task; allTasks?: Task[] 
     return depTask?.status !== "APPROVED";
   });
 
+  // Get all dependency task names
+  const depTaskNames = dependencies.map(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.title || `Task ${dep.dependsOnTaskId}`;
+  });
+
   if (incompleteDeps.length === 0) {
     return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 text-success">
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 text-success" title={`Depends on: ${depTaskNames.join(', ')}`}>
         <Link2 className="h-3.5 w-3.5" />
         <span className="font-medium text-xs">Dependencies Complete</span>
       </div>
     );
   }
 
+  // Get incomplete dependency task names
+  const incompleteNames = incompleteDeps.map(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.title || `Task ${dep.dependsOnTaskId}`;
+  });
+
   return (
-    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-warning/10 text-warning">
+    <div 
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-warning/10 text-warning cursor-help"
+      title={`Blocked by: ${incompleteNames.join(', ')}`}
+    >
       <Link2 className="h-3.5 w-3.5" />
-      <span className="font-medium text-xs">
-        {incompleteDeps.length} Pending Dependencies
+      <span className="font-medium text-xs truncate max-w-[200px]">
+        Blocked by: {incompleteNames.slice(0, 2).join(', ')}{incompleteNames.length > 2 ? ` +${incompleteNames.length - 2} more` : ''}
       </span>
     </div>
   );
@@ -147,6 +162,21 @@ export function TaskCard({ task, onClick, onMenuClick, className, allTasks }: Ta
 export function TaskCardCompact({ task, onClick, allTasks }: TaskCardProps) {
   const { data: dependencies = [] } = useTaskDependencies(task.id);
   const hasDependencies = dependencies.length > 0;
+  
+  // Get dependency info for tooltip
+  const incompleteDeps = dependencies.filter(dep => {
+    const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+    return depTask?.status !== "APPROVED";
+  });
+  
+  const depTooltip = incompleteDeps.length > 0
+    ? `Blocked by: ${incompleteDeps.map(dep => {
+        const depTask = allTasks?.find(t => t.id === String(dep.dependsOnTaskId));
+        return depTask?.title || `Task ${dep.dependsOnTaskId}`;
+      }).join(', ')}`
+    : hasDependencies
+      ? `Dependencies complete`
+      : '';
 
   return (
     <div
@@ -176,7 +206,13 @@ export function TaskCardCompact({ task, onClick, allTasks }: TaskCardProps) {
           <MessageCircle className="h-4 w-4 text-destructive" title="Has rejection note" />
         )}
         {hasDependencies && (
-          <Link2 className="h-4 w-4 text-warning" title="Has dependencies" />
+          <Link2 
+            className={cn(
+              "h-4 w-4",
+              incompleteDeps.length > 0 ? "text-warning" : "text-success"
+            )} 
+            title={depTooltip} 
+          />
         )}
         <Badge variant={getStatusVariant(task.status)} size="sm">
           {TASK_STATUS_LABELS[task.status]}

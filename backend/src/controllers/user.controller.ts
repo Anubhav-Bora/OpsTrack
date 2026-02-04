@@ -43,8 +43,9 @@ export const userController = {
             const users = await userService.getAllUsersWithStats();
             res.json(users);
         }
-        catch (error) {
-            res.status(500).json({ error: 'Failed to fetch users with stats' });
+        catch (error: any) {
+            console.error('getAllUsersWithStats error:', error);
+            res.status(500).json({ error: error.message || 'Failed to fetch users with stats' });
         }
     },
 
@@ -55,8 +56,9 @@ export const userController = {
             const users = await userService.getUsersWithStatsByRoomId(Number(roomId));
             res.json(users);
         }
-        catch (error) {
-            res.status(500).json({ error: 'Failed to fetch room users with stats' });
+        catch (error: any) {
+            console.error('getUsersWithStatsByRoomId error:', error);
+            res.status(500).json({ error: error.message || 'Failed to fetch room users with stats' });
         }
     },
 }

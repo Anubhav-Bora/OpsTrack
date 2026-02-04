@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Users, ListTodo, BarChart3, Search, Filter, Trash2, AlertTriangle, UserCheck } from "lucide-react";
+import { Plus, Users, ListTodo, BarChart3, Search, Filter, Trash2, UserCheck } from "lucide-react";
 import { Layout } from "@/components/Layout/Layout";
 import { Header } from "@/components/Layout/Header";
 import { TaskList } from "@/components/Task/TaskList";
@@ -23,7 +23,7 @@ import { useUpdateMemberRole, useRemoveMember } from "@/hooks/useMemberManagemen
 import { useAddMember, useAllUsers } from "@/hooks/useAddMember";
 import { useDeleteRoom } from "@/hooks/useRooms";
 import { useRoomUsersWithStats } from "@/hooks/useUserStats";
-import { Room, Task, RoomMember, TaskStatus, CreateTaskInput } from "@/types";
+import {  Task,  TaskStatus, CreateTaskInput } from "@/types";
 import { TASK_STATUS_LABELS } from "@/utils/constants";
 
 export default function RoomDetail() {
@@ -43,7 +43,7 @@ export default function RoomDetail() {
 
   // Fetch data
   const { data: room, isLoading: roomLoading } = useRoomDetail(Number(roomId));
-  const { data: tasks = [], isLoading: tasksLoading } = useRoomTasks(Number(roomId));
+  const { data: tasks = [], } = useRoomTasks(Number(roomId));
   const { data: members = [] } = useRoomMembers(Number(roomId));
   const { data: allUsers = [] } = useAllUsers();
   const { mutate: createTask, isPending: isCreatingTask } = useCreateTask();

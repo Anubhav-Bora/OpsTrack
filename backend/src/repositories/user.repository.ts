@@ -34,47 +34,52 @@ export const userRepo = {
 
     // Get all users with task statistics (for admin)
     getAllUsersWithStats: async () => {
-        const users = await prisma.user.findMany({
-            include: {
-                tasks: {
-                    select: {
-                        id: true,
-                        status: true,
+        try {
+            const users = await prisma.user.findMany({
+                include: {
+                    tasks: {
+                        select: {
+                            id: true,
+                            status: true,
+                        },
                     },
-                },
-                roomMemberships: {
-                    include: {
-                        room: {
-                            select: {
-                                id: true,
-                                name: true,
+                    roomMemberships: {
+                        include: {
+                            room: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                },
                             },
                         },
                     },
                 },
-            },
-        });
+            });
 
-        return users.map(user => ({
-            id: user.id.toString(),
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            createdAt: user.createdAt,
-            stats: {
-                totalTasks: user.tasks.length,
-                pendingTasks: user.tasks.filter(t => t.status === 'PENDING').length,
-                inProgressTasks: user.tasks.filter(t => t.status === 'IN_PROGRESS').length,
-                submittedTasks: user.tasks.filter(t => t.status === 'SUBMITTED').length,
-                completedTasks: user.tasks.filter(t => t.status === 'APPROVED').length,
-                rejectedTasks: user.tasks.filter(t => t.status === 'REJECTED').length,
-            },
-            rooms: user.roomMemberships.map(m => ({
-                id: m.room.id.toString(),
-                name: m.room.name,
-                role: m.role,
-            })),
-        }));
+            return users.map(user => ({
+                id: user.id.toString(),
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                createdAt: user.createdAt,
+                stats: {
+                    totalTasks: user.tasks?.length || 0,
+                    pendingTasks: user.tasks?.filter(t => t.status === 'PENDING').length || 0,
+                    inProgressTasks: user.tasks?.filter(t => t.status === 'IN_PROGRESS').length || 0,
+                    submittedTasks: user.tasks?.filter(t => t.status === 'SUBMITTED').length || 0,
+                    completedTasks: user.tasks?.filter(t => t.status === 'APPROVED').length || 0,
+                    rejectedTasks: user.tasks?.filter(t => t.status === 'REJECTED').length || 0,
+                },
+                rooms: user.roomMemberships?.map(m => ({
+                    id: m.room.id.toString(),
+                    name: m.room.name,
+                    role: m.role,
+                })) || [],
+            }));
+        } catch (error) {
+            console.error('getAllUsersWithStats repository error:', error);
+            throw error;
+        }
     },
 
     // Get users with stats for a specific room (for leader)
