@@ -1,3 +1,5 @@
+// Load environment variables first
+import 'dotenv/config';
 import app from '../src/app';
 
 // Export the Express app for Vercel serverless
