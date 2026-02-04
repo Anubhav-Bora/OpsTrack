@@ -5,7 +5,7 @@ export const signupSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('Invalid email'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
-    role: z.enum(['ADMIN', 'BACKEND', 'FRONTEND', 'DEVOPS', 'CYBERSECURITY'] as const),
+    role: z.enum(['ADMIN', 'BACKEND', 'FRONTEND', 'DEVOPS', 'CYBERSECURITY']),
 });
 
 export const signinSchema = z.object({
@@ -18,18 +18,18 @@ export const createUserSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('Invalid email'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
-    role: z.enum(['ADMIN', 'BACKEND', 'FRONTEND', 'DEVOPS', 'CYBERSECURITY'] as const),
+    role: z.enum(['ADMIN', 'BACKEND', 'FRONTEND', 'DEVOPS', 'CYBERSECURITY']),
 });
 
 // Task schemas
 export const createTaskSchema = z.object({
     title: z.string().min(1, 'Title is required'),
-    requiredRole: z.enum(['ADMIN', 'BACKEND', 'FRONTEND', 'DEVOPS', 'CYBERSECURITY'] as const),
+    requiredRole: z.enum(['ADMIN', 'BACKEND', 'FRONTEND', 'DEVOPS', 'CYBERSECURITY']),
     roomId: z.number().int().positive('Room ID must be positive'),
 });
 
 export const updateTaskStatusSchema = z.object({
-    status: z.enum(['PENDING', 'IN_PROGRESS', 'DONE', 'BLOCKED'] as const),
+    status: z.enum(['PENDING', 'IN_PROGRESS', 'DONE', 'BLOCKED']),
 });
 
 export const assignTaskSchema = z.object({
@@ -50,11 +50,11 @@ export const updateRoomSchema = z.object({
 export const addMemberToRoomSchema = z.object({
     userId: z.number().int().positive('User ID must be positive'),
     roomId: z.number().int().positive('Room ID must be positive'),
-    role: z.enum(['LEADER', 'ADMIN', 'MEMBER'] as const).optional(),
+    role: z.enum(['LEADER', 'ADMIN', 'MEMBER']).optional(),
 });
 
 export const updateMemberRoleSchema = z.object({
-    role: z.enum(['LEADER', 'ADMIN', 'MEMBER'] as const),
+    role: z.enum(['LEADER', 'ADMIN', 'MEMBER']),
 });
 
 // Task dependency schemas

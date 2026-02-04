@@ -1,7 +1,9 @@
 // Prisma client instance
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+
+// Define PrismaClient type locally to avoid import issues during build
+const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

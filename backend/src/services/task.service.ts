@@ -1,7 +1,9 @@
 import { taskRepo } from '../repositories/task.repository';
 import { taskDependencyRepo } from '../repositories/taskDependency.repository';
 import { authorizationService } from './authorization.service';
-import { TaskStatus, UserRole } from '@prisma/client';
+
+type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'BLOCKED';
+type UserRole = 'ADMIN' | 'BACKEND' | 'FRONTEND' | 'DEVOPS' | 'CYBERSECURITY';
 
 export const taskService = {
     getAllTasks: async () => {
@@ -28,9 +30,9 @@ export const taskService = {
         if (status === 'IN_PROGRESS' || status === 'SUBMITTED') {
             const dependencies = await taskDependencyRepo.getTaskDependencies(id);
             if (dependencies.length > 0) {
-                const incompleteDeps = dependencies.filter(dep => dep.dependsOn.status !== 'APPROVED');
+                const incompleteDeps = dependencies.filter((dep: any) => dep.dependsOn.status !== 'APPROVED');
                 if (incompleteDeps.length > 0) {
-                    const incompleteNames = incompleteDeps.map(dep => dep.dependsOn.title).join(', ');
+                    const incompleteNames = incompleteDeps.map((dep: any) => dep.dependsOn.title).join(', ');
                     throw new Error(`Cannot ${status === 'IN_PROGRESS' ? 'start' : 'submit'} task: The following dependent tasks must be approved first: ${incompleteNames}`);
                 }
             }

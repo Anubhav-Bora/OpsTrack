@@ -1,5 +1,6 @@
 import { roomMemberRepo } from '../repositories/roomMember.repository';
-import { RoomRole } from '@prisma/client';
+
+type RoomRole = 'LEADER' | 'ADMIN' | 'MEMBER';
 
 export const roomMemberService = {
     getAllRoomMembers: async () => {
