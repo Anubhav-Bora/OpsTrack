@@ -26,7 +26,7 @@ app.use(cors({
 }));
 
 // Routes
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: any, res: any) => {
     res.json({ status: 'OK', message: 'Backend is running' });
 });
 

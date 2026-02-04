@@ -6,7 +6,7 @@ const router = Router();
 
 // Debug middleware to log which route is matched
 const logRoute = (routeName: string) => (req: Request, res: Response, next: NextFunction) => {
-    next();
+    (next as any)();
 };
 
 // Test route (no auth required)
