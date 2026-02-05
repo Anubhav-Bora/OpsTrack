@@ -1,6 +1,6 @@
 # OpsTrack
 
-A comprehensive task management and collaboration platform designed for development teams. OpsTrack enables teams to organize work into rooms, assign role-based tasks, track dependencies, and manage approvals with a clean, modern interface.
+A comprehensive task management and collaboration platform designed for development teams. Built with React, TypeScript, TanStack Query, Redux Toolkit, Node.js, Express, Prisma, and PostgreSQL. OpsTrack enables teams to organize work into rooms, assign role-based tasks, track dependencies, and manage approvals with a clean, modern interface.
 
 ## 🌐 Live Demo
 
@@ -153,67 +153,81 @@ pnpm prisma migrate dev
 
 5. Seed the database (optional):
 ```bash
-pnpm prisma db seed
-```
+# OpsTrack
 
-6. Start development server:
-```bash
+OpsTrack is a simple, modern task management and collaboration platform for development teams.
+
+## 🚀 Technologies Used
+
+**Frontend:**
+- React
+- TypeScript
+- Vite
+- Redux Toolkit
+- TanStack Query
+- Tailwind CSS, shadcn/ui, Radix UI
+
+**Backend:**
+- Node.js
+- Express
+- TypeScript
+- Prisma ORM
+- PostgreSQL (Neon)
+
+**Other:**
+- JWT Auth, pnpm, Vercel
+
+**Real-time updates:**
+Polling is used for real-time updates (instead of WebSockets) for Vercel compatibility. WebSocket support can be added if needed.
+
+---
+
+## ✨ Features
+
+- Room-based project organization
+- Role-based task assignment
+- Task dependencies and approvals
+- User authentication (JWT)
+- Modern UI with responsive design
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- pnpm (recommended) or npm
+- PostgreSQL database (or Neon)
+
+### Backend Setup
+```sh
+cd backend
+pnpm install
+# Set up .env (see .env.example)
+pnpm prisma migrate dev
 pnpm dev
 ```
-
-Backend will run on `http://localhost:3000`
 
 ### Frontend Setup
-
-1. Navigate to frontend directory:
-```bash
+```sh
 cd frontend
-```
-
-2. Install dependencies:
-```bash
 pnpm install
-```
-
-3. Create `.env.development` file:
-```env
-VITE_API_URL=http://localhost:3000/api
-```
-
-4. Start development server:
-```bash
+# Set up .env.development (see .env.example)
 pnpm dev
 ```
 
-Frontend will run on `http://localhost:5173`
+---
 
-## 🗄️ Database Schema
+## Project Structure
 
-### Models
-- **User**: User accounts with roles and authentication
-- **Room**: Project workspaces for organizing tasks
-- **Task**: Individual work items with status and dependencies
-- **RoomMember**: Junction table for room membership
-- **TaskDependency**: Task prerequisite relationships
+frontend/ - React app
+backend/  - Node.js API & Prisma
 
-### Enums
-- **UserRole**: ADMIN, BACKEND, FRONTEND, DEVOPS, CYBERSECURITY
-- **TaskStatus**: PENDING, IN_PROGRESS, SUBMITTED, APPROVED, REJECTED, BLOCKED
-- **RoomRole**: LEADER, ADMIN, MEMBER
+---
 
-## 🔐 Authentication
+## License
 
-The application uses JWT-based authentication:
-- Tokens are stored in localStorage
-- Protected routes require valid JWT token
-- Token is sent in Authorization header for API requests
-- Automatic redirect to login on 401 responses
-
-## 📡 API Endpoints
-
-### Authentication
-- `POST /api/auth/signup` - Register new user
-- `POST /api/auth/signin` - Login user
+ISC License. Built with ❤️ by the OpsTrack team.
 - `GET /api/auth/me` - Get current user
 
 ### Users
