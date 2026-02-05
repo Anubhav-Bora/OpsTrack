@@ -1,12 +1,22 @@
 # OpsTrack
 
-A comprehensive task management and collaboration platform designed for development teams. Built with React, TypeScript, TanStack Query, Redux Toolkit, Node.js, Express, Prisma, and PostgreSQL. OpsTrack enables teams to organize work into rooms, assign role-based tasks, track dependencies, and manage approvals with a clean, modern interface.
+A comprehensive task management and collaboration platform designed for development teams.
 
-## 🌐 Live Demo
+## 🛠️ Technologies
 
-- **Frontend**: [https://ops-frontend-amber.vercel.app](https://ops-frontend-amber.vercel.app)
-- **Backend API**: [https://ops-track-ashen.vercel.app](https://ops-track-ashen.vercel.app)
+![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-Runtime-339933?logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5.2-000000?logo=express&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-7.3-2D3748?logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-336791?logo=postgresql&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?logo=vite&logoColor=white)
+![Redux](https://img.shields.io/badge/Redux-2.11-764ABC?logo=redux&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/TanStack%20Query-5.90-FF4154?logo=react-query&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-06B6D4?logo=tailwindcss&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?logo=vercel&logoColor=white)
 
+**Real-time updates:** Polling (WebSocket support can be added if needed for better compatibility)
 ## ✨ Features
 
 ### Core Functionality
