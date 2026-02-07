@@ -1,6 +1,9 @@
 # OpsTrack
+
 Admin UserName:admin123@gmail.com
+
 Admin password:admin123
+
 A comprehensive task management and collaboration platform designed for development teams.
 
 ## 🛠️ Technologies
