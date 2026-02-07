@@ -321,39 +321,3 @@ pnpm build
 # Backend (handled by Vercel)
 # Uses api/index.ts as serverless function
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the ISC License.
-
-## 👥 Authors
-
-Built with ❤️ by the OpsTrack team
-
-## 🐛 Known Issues
-
-- None currently reported
-
-## 🗺️ Roadmap
-
-- [ ] Real-time notifications with WebSockets
-- [ ] File attachments for tasks
-- [ ] Task comments and discussions
-- [ ] Advanced filtering and search
-- [ ] Email notifications
-- [ ] Mobile app
-- [ ] Task templates
-- [ ] Time tracking
-- [ ] Analytics dashboard
-
-## 📞 Support
-
-For support, please open an issue in the GitHub repository.
